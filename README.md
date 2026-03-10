@@ -1,16 +1,7 @@
-# React + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+⚓ Retro-Lite v2Retro-Lite ist ein hochperformantes, moderationsgeführtes Retrospektiven-Tool für agile Teams. Es wurde speziell entwickelt, um den "Bias" in Meetings zu eliminieren und durch einen strukturierten Drill-Down-Workflow von Problemen zu echten Massnahmen zu gelangen.🚀 Key FeaturesReal-Time Sync: Nahtlose Synchronisation zwischen Admin (Scrum Master) und Teilnehmern via Firebase Firestore (Region: Frankfurt).Guided Workflow: Geführter Prozess durch 4 Phasen:Gather Data (4L): Liked, Learned, Lacked, Longed For.Ursachenforschung: Deep-Dive in die wichtigsten "Anker".Lösungs-Brainstorming: Kollaborative Ideenfindung.Massnahmen: Verbindliche Definition von Action Items (Owner/Deadline).Anti-Bias Blur: Verdeckte Karten während der Schreibphase zur Vermeidung von Gruppendenken.Winner-Logic: Mathematische Ermittlung der Karten mit den höchsten Votes zur automatischen Prozesssteuerung.PWA Ready: Kann als Standalone-App auf Smartphones installiert werden.🛠 Tech Stack & ArchitekturDie App folgt modernen Software-Architektur-Prinzipien:Frontend: React 18 mit Vite für ultraschnelle Development-Cycles.Backend: Firebase (Authentication & Cloud Firestore).Styling: Tailwind CSS für ein responsives "Boutique-UI".Modularität:useRetroStore.js: Zentraler Custom Hook für State & Firebase-Logik.components.jsx: Funktionale UI-Komponenten und Pure Logic.App.jsx: View-Komposition und Routing.🚦 Getting StartedVoraussetzungenNode.js (v18+)Ein Firebase-Projekt (Region Frankfurt empfohlen)InstallationRepository klonenAbhängigkeiten installieren:npm install
+Umgebungsvariablen konfigurieren (.env.local):VITE_FIREBASE_API_KEY=dein_key
+VITE_FIREBASE_PROJECT_ID=retro-lite-v2
+...
+Server starten:npm run dev
+🧪 TestingQualitätssicherung durch zweistufiges Testing:Unit Tests (Vitest): Validierung der Kernlogik (Voting-Algorithmen, Phasen-Filter).npm test
+BDD (Cucumber/Playwright): Automatisierte End-to-End Tests des Teilnehmer-Workflows (Coming Soon).🛡 Sicherheitsregeln (Firestore)Das Projekt nutzt granulare Sicherheitsregeln, um sicherzustellen, dass:Nur authentifizierte Admins Sessions erstellen können.Anonyme Teilnehmer nur innerhalb ihrer Session agieren dürfen.Die parentId-Hierarchie bei Schreibzugriffen gewahrt bleibt.👨‍💻 AuthorStephan (Technical Enabler / Scrum Master @ LST)Created with Passion for Agile Excellence.
