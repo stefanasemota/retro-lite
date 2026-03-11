@@ -2,9 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ dev, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ dev ]
+    branches: [ main ]
 
 # Wir setzen die Node-Umgebung für den gesamten Workflow auf die Zukunft
 env:
