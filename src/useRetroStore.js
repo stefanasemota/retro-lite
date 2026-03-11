@@ -51,6 +51,26 @@ export function useRetroStore() {
 
   // Auth Init
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const testMode = params.get('testMode') === 'true';
+
+    if (testMode) {
+      const role = params.get('role') || 'admin';
+      const isStephan = role === 'admin';
+      console.log(`%c[Retro-Lite] BDD Test Mode Active: ${role}`, 'background:#4338ca;color:#fff;padding:2px 8px;border-radius:4px');
+      
+      setTimeout(() => {
+        setUser({ 
+          uid: isStephan ? 'test-admin' : 'test-participant', 
+          email: isStephan ? 'stephan.admin@lst.de' : 'michael.part@lst.de', 
+          displayName: isStephan ? 'Stephan Admin' : 'Michael Participant', 
+          isAnonymous: !isStephan 
+        });
+        setLoading(false);
+      }, 0);
+      return;
+    }
+
     const init = async () => {
       try {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token)
