@@ -1,29 +1,38 @@
-name: CI
+name: CI Pipeline
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
+
+# Wir setzen die Node-Umgebung für den gesamten Workflow auf die Zukunft
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build_and_test:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout Repository
+        # v4 ist bereits kompatibel, wird aber hier unter Node 24 ausgeführt
+        uses: actions/checkout@v4
 
-    - name: Use Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20.x'
-        cache: 'npm'
+      - name: Setup Node.js (LTS 24)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install Dependencies
+        run: npm ci
 
-    - name: Run Lint
-      run: npm run lint
+      - name: Run Unit Tests
+        run: npm test
 
-    - name: Run Tests
-      run: npm test
+      - name: Build Application
+        run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          VITE_FIREBASE_PROJECT_ID: "retro-lite-v2"

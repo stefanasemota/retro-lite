@@ -1,63 +1,83 @@
-LST Retro-Lite: Das 4-Schritte Rule-Book (SOP)
+# 📖 LST Retro-Lite: Standard Operating Procedure (SOP)
 
-Dieses Dokument dient als Standard Operating Procedure (SOP) für LST Retrospektiven. Es beschreibt den hybriden Workflow zwischen Scrum Master (Admin) und Team (Teilnehmer).
+![Workflow](https://img.shields.io/badge/Workflow-4--Phasen--Modell-blue?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Industry--Standard-success?style=for-the-badge)
+![Role](https://img.shields.io/badge/Role-Moderator--Manual-indigo?style=for-the-badge)
 
-Phase 1: Das Segelboot (Gather Data)
+Dieses Dokument dient als technisches Regelwerk und **Standard Operating Procedure (SOP)** für LST Retrospektiven. Es beschreibt den hybriden Workflow zwischen dem Moderator (Host) und dem Team (Teilnehmer) in der `retro-lite-v2` Umgebung.
 
-Ziel: Ein unvoreingenommenes Bild des Sprints erhalten.
+---
 
-Aktion: Jeder Teilnehmer schreibt Karten in die 4L-Kategorien (Liked, Learned, Lacked, Longed For).
+## 📋 Table of Contents
+- [Phase 1: Das Segelboot (Gather Data)](#phase-1-das-segelboot-gather-data)
+- [Phase 2: Ursachenforschung (Generate Insights)](#phase-2-ursachenforschung-generate-insights)
+- [Phase 3: Lösungs-Brainstorming (Decide What to Do)](#phase-3-lösungs-brainstorming-decide-what-to-do)
+- [Phase 4: Verbindlichkeit (Concrete Actions)](#phase-4-verbindlichkeit-concrete-actions)
+- [⚙️ Technische Features & Operational Rules](#️-technische-features--operational-rules)
+- [💡 Profi-Tipps für Moderatoren](#-profi-tipps-für-moderatoren)
 
-Regel: Der Anti-Bias "Blur" ist aktiv. Niemand liest mit, während geschrieben wird.
+---
 
-Abschluss: Admin deaktiviert den Blur. Das Team votet die wichtigsten Karten (die "dicksten Anker").
+## Phase 1: Das Segelboot (Gather Data)
 
-Sidebar: Die Sidebar zeigt nur den Session-Namen und die Teilnehmerzahl.
+> [!IMPORTANT]
+> **Ziel**: Ein unvoreingenommenes, ehrliches Bild des Sprints erhalten, ohne Peer-Pressure.
 
-Phase 2: Ursachenforschung (Generate Insights)
+- **Aktion**: Jeder Teilnehmer schreibt Karten in die 4L-Kategorien (**Liked, Learned, Lacked, Longed For**).
+- **Regel**: Der **Anti-Bias "Blur"** ist aktiv. Niemand liest mit, während andere schreiben. Dies verhindert das sogenannte "Groupthink"-Phänomen.
+- **Abschluss**: Der Admin deaktiviert den Blur. Das Team votet die wichtigsten Karten (die "dicksten Anker").
 
-Trigger: Die Karte mit den mathematisch höchsten Votes wird automatisch identifiziert.
+---
 
-Aktion: Admin klickt auf den Winner-CTA [Ursachenforschung 🔍] auf der Gewinner-Karte.
+## Phase 2: Ursachenforschung (Generate Insights)
 
-Sidebar-Update: Die gewählte 4L-Karte wird rechts als ⚓ Anker fixiert.
+> [!NOTE]
+> **Trigger**: Die Karte mit den mathematisch höchsten Votes wird automatisch als "Winner" identifiziert.
 
-Workflow: Die App zeigt nun für alle Teilnehmer nur noch die Ursachen-Ebene an. Neue Einträge erhalten automatisch die ID des Ankers als parentId.
+- **Aktion**: Der Admin klickt auf den Winner-CTA `[Ursachenforschung 🔍]` auf der Gewinner-Karte.
+- **Sidebar-Update**: Die gewählte 4L-Karte wird im **Sidebar Breadcrumb** als ⚓ **Anker** fixiert.
+- **Workflow**: Die App schaltet für alle Teilnehmer in den Drill-Down-Mode. Neue Einträge werden automatisch hierarchisch unter dem Anker gespeichert.
 
-Phase 3: Lösungs-Brainstorming (Decide What to Do)
+---
 
-Trigger: Die wichtigste Ursache aus Phase 2 wird gewählt (Winner-Logic).
+## Phase 3: Lösungs-Brainstorming (Decide What to Do)
 
-Aktion: Admin klickt auf [Lösung finden 💡].
+> [!TIP]
+> **Fokus**: Lösungen müssen exakt zum vorher identifizierten Problem (Anker) passen.
 
-Sidebar-Update: Unter dem Anker erscheint nun die 🔍 Ursache.
+- **Aktion**: Admin klickt auf `[Lösung finden 💡]`.
+- **Sidebar-Update**: Unter dem Anker erscheint nun die 🔍 **Ursache**. Der "Rote Faden" wird für alle sichtbar.
+- **Team-Workflow**: Das Team nutzt den Kontext rechts, um links präzise Lösungen zu brainstormen.
 
-Workflow: Das Team sieht den "Roten Faden" rechts und sucht links nach Lösungen, die exakt zu dieser Ursache passen.
+---
 
-Phase 4: Verbindlichkeit (Concrete Actions)
+## Phase 4: Verbindlichkeit (Concrete Actions)
 
-Trigger: Die beste Lösung wird identifiziert (Winner-Logic).
+> [!CAUTION]
+> **Regel**: Eine Massnahme ohne Owner ist keine Massnahme, sondern ein Wunsch.
 
-Aktion: Admin klickt auf [Massnahme festlegen ✅].
+- **Aktion**: Admin klickt auf `[Massnahme festlegen ✅]`.
+- **Sidebar-Update**: Die gewählte 💡 **Lösung** vervollständigt den Context-Trail.
+- **Ergebnis**: Eine finale Action-Card mit Owner (Wer) und Deadline (Wann) wird definiert.
 
-Sidebar-Update: Die gewählte 💡 Lösung vervollständigt den Context-Trail.
+---
 
-Regel: Eine Massnahme wird erst gespeichert, wenn ein Owner (Wer) und eine Deadline (Wann) definiert sind.
+## ⚙️ Technische Features & Operational Rules
 
-🛠️ Technische Features & Operational Rules
+| Feature | Beschreibung | Benefit |
+| :--- | :--- | :--- |
+| **Context-Trail** | Echtzeit-Streaming des `drillPath` via Firestore. | Reduktion der kognitiven Last. |
+| **Winner-Logic** | FIFO-Algorithmus bei Voting-Gleichstand. | Verhindert Diskussionen über Priorisierung. |
+| **No-Data-Loss** | Hierarchische Datenspeicherung via `parentId`. | Alle Daten bleiben im CSV-Export erhalten. |
+| **Host-Control** | Sync-Mechanismus für Phasenwechsel. | Alle Teilnehmer bleiben im selben Fokus. |
 
-Instant Setup: Die Session wird erst in Firestore erstellt, nachdem der Admin einen Namen vergeben hat.
+---
 
-Context-Trail (Sidebar): Dient zur Reduktion der kognitiven Last. Der Pfad (drillPath) wird in Echtzeit aus der Datenbank an alle Teilnehmer gestreamt.
+## 💡 Profi-Tipps für Moderatoren
 
-Winner-Logic: Der Admin-Button für die nächste Phase erscheint ausschließlich auf der Karte mit dem höchsten Voting-Score (FIFO bei Gleichstand).
+- **Transparenz**: Nutze die Sidebar, um Nachzügler sofort "abzuholen".
+- **Fokus-Check**: Wenn das Team abschweift, zeige auf den Anker in der Sidebar: *"Lösen wir gerade wirklich dieses Problem?"*
+- **Check-out**: Bestätige am Ende: *"Der Rote Faden steht. Haben wir hiermit genug Hebel für den nächsten Sprint?"*
 
-No-Data-Loss: Durch die hierarchische parentId-Struktur bleiben alle Daten der vorherigen Phasen erhalten und können im Export (CSV) zusammengeführt werden.
-
-Profi-Tipps für Stephan (Moderator)
-
-Transparenz: Nutze die Sidebar, um Nachzügler sofort "abzuholen".
-
-Fokus: Wenn das Team abschweift, zeige auf den Anker in der Sidebar: "Lösen wir gerade wirklich dieses Problem?"
-
-Check-out: Bestätige am Ende von Phase 4: "Der Rote Faden steht. Michael (PO), haben wir hiermit genug Hebel für den nächsten Sprint?"
+> [!NOTE]
+> Dieses Rule-Book wird kontinuierlich an die Weiterentwicklung von `retro-lite-v2` angepasst.
