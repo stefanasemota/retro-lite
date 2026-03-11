@@ -1,51 +1,63 @@
-LST Retro-Lite: Das 4-Schritte Rule-Book
+LST Retro-Lite: Das 4-Schritte Rule-Book (SOP)
 
-Dieses Rule-Book definiert den Standard-Prozess für LST Retrospektiven, um von reiner Datenaufnahme (Gather Data) zu verbindlichen Ergebnissen (Action Items) zu gelangen.
+Dieses Dokument dient als Standard Operating Procedure (SOP) für LST Retrospektiven. Es beschreibt den hybriden Workflow zwischen Scrum Master (Admin) und Team (Teilnehmer).
 
 Phase 1: Das Segelboot (Gather Data)
 
-Ziel: Vollständiges Bild des Sprints erhalten.
+Ziel: Ein unvoreingenommenes Bild des Sprints erhalten.
 
-Aktion: Jeder Teilnehmer schreibt Karten in die 4L-Kategorien.
+Aktion: Jeder Teilnehmer schreibt Karten in die 4L-Kategorien (Liked, Learned, Lacked, Longed For).
 
-Regel: "Blur" ist aktiv. Niemand liest mit, während geschrieben wird.
+Regel: Der Anti-Bias "Blur" ist aktiv. Niemand liest mit, während geschrieben wird.
 
-Abschluss: Admin deaktiviert den Blur. Das Team votet die wichtigsten Karten (Anker).
+Abschluss: Admin deaktiviert den Blur. Das Team votet die wichtigsten Karten (die "dicksten Anker").
+
+Sidebar: Die Sidebar zeigt nur den Session-Namen und die Teilnehmerzahl.
 
 Phase 2: Ursachenforschung (Generate Insights)
 
-Trigger: Die Karte mit den meisten Votes in "Lacked" oder "Longed For" wird ausgewählt.
+Trigger: Die Karte mit den mathematisch höchsten Votes wird automatisch identifiziert.
 
-Aktion: Button [Ursachenforschung] auf der Gewinner-Karte klicken.
+Aktion: Admin klickt auf den Winner-CTA [Ursachenforschung 🔍] auf der Gewinner-Karte.
 
-Ziel: Die "Wahrheit hinter der Wahrheit" finden (5-Why Methode).
+Sidebar-Update: Die gewählte 4L-Karte wird rechts als ⚓ Anker fixiert.
 
-Regel: Einträge hier sind ebenfalls "Blurred", um Bias zu vermeiden.
+Workflow: Die App zeigt nun für alle Teilnehmer nur noch die Ursachen-Ebene an. Neue Einträge erhalten automatisch die ID des Ankers als parentId.
 
 Phase 3: Lösungs-Brainstorming (Decide What to Do)
 
-Trigger: Die wichtigste Ursache aus Phase 2 wird gewählt.
+Trigger: Die wichtigste Ursache aus Phase 2 wird gewählt (Winner-Logic).
 
-Aktion: Button [Lösung finden] klicken.
+Aktion: Admin klickt auf [Lösung finden 💡].
 
-Ziel: Wege finden, um die Ursache zu eliminieren.
+Sidebar-Update: Unter dem Anker erscheint nun die 🔍 Ursache.
 
-Regel: Quantität vor Qualität. Jede Idee zählt.
+Workflow: Das Team sieht den "Roten Faden" rechts und sucht links nach Lösungen, die exakt zu dieser Ursache passen.
 
 Phase 4: Verbindlichkeit (Concrete Actions)
 
-Trigger: Die beste Lösung wird ausgewählt.
+Trigger: Die beste Lösung wird identifiziert (Winner-Logic).
 
-Aktion: Button [Massnahme definieren] klicken.
+Aktion: Admin klickt auf [Massnahme festlegen ✅].
 
-Ziel: Wer macht was bis wann?
+Sidebar-Update: Die gewählte 💡 Lösung vervollständigt den Context-Trail.
 
-Regel: Eine Massnahme ohne "Owner" (Wer) und "Deadline" (Wann) existiert nicht.
+Regel: Eine Massnahme wird erst gespeichert, wenn ein Owner (Wer) und eine Deadline (Wann) definiert sind.
+
+🛠️ Technische Features & Operational Rules
+
+Instant Setup: Die Session wird erst in Firestore erstellt, nachdem der Admin einen Namen vergeben hat.
+
+Context-Trail (Sidebar): Dient zur Reduktion der kognitiven Last. Der Pfad (drillPath) wird in Echtzeit aus der Datenbank an alle Teilnehmer gestreamt.
+
+Winner-Logic: Der Admin-Button für die nächste Phase erscheint ausschließlich auf der Karte mit dem höchsten Voting-Score (FIFO bei Gleichstand).
+
+No-Data-Loss: Durch die hierarchische parentId-Struktur bleiben alle Daten der vorherigen Phasen erhalten und können im Export (CSV) zusammengeführt werden.
 
 Profi-Tipps für Stephan (Moderator)
 
-Fokus-Hebel: Wenn das Team zu viele Themen hat, sage: "Wir lösen heute nur den dicksten Anker, aber den lösen wir richtig."
+Transparenz: Nutze die Sidebar, um Nachzügler sofort "abzuholen".
 
-Action-Check: Frage am Ende von Phase 4: "Wenn wir das so umsetzen, ist das Problem dann nächste Woche Geschichte?"
+Fokus: Wenn das Team abschweift, zeige auf den Anker in der Sidebar: "Lösen wir gerade wirklich dieses Problem?"
 
-Zeitboxen: Phase 1 (10 Min), Phase 2 (10 Min), Phase 3 (10 Min), Phase 4 (5 Min).
+Check-out: Bestätige am Ende von Phase 4: "Der Rote Faden steht. Michael (PO), haben wir hiermit genug Hebel für den nächsten Sprint?"

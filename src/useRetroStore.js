@@ -1,3 +1,4 @@
+/* global __initial_auth_token */
 import { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import {
@@ -9,7 +10,7 @@ import {
   collection, addDoc, onSnapshot, serverTimestamp,
   increment, arrayUnion, arrayRemove
 } from 'firebase/firestore';
-import { filterEntries } from './components';
+import { filterEntries, updateHistory, calculateCurrentPhase } from './logic';
 
 // ── Firebase Init ────────────────────────────────────────────────────────────
 let app, auth, db;
@@ -77,7 +78,7 @@ export function useRetroStore() {
   }, [user, sessionId]);
 
   // Derived State
-  const currentPhase = session?.currentPhase ?? 1;
+  const currentPhase = calculateCurrentPhase(session?.drillPath);
   const focusId      = session?.focusId ?? null;
   const drillPath    = session?.drillPath ?? [];
   const isHost       = session?.hostId === user?.uid;
@@ -129,6 +130,7 @@ export function useRetroStore() {
       currentPhase: 1,
       focusId:      null,
       drillPath:    [],
+      navigationHistory: [],
     });
     setSessionId(newId);
   };
@@ -159,7 +161,7 @@ export function useRetroStore() {
         votes:  increment(hasVoted ? -1 : 1),
         voters: hasVoted ? arrayRemove(user.uid) : arrayUnion(user.uid),
       });
-    } catch (err) { setError('Fehler beim Abstimmen.'); }
+    } catch { setError('Fehler beim Abstimmen.'); }
   };
 
   const toggleBlur = async () => {
@@ -170,12 +172,41 @@ export function useRetroStore() {
   const setDrillPhase = async (nextPhase, newFocusId, newPath) => {
     if (!isHost) return;
     try {
-      await updateDoc(sessionRef(sessionId), {
+      const updates = {
         currentPhase: nextPhase,
         focusId: newFocusId,
         drillPath: newPath
-      });
+      };
+      
+      // Add to navigationHistory if drilling into a specific ID
+      if (newFocusId && newPath.length > 0) {
+        const lastStep = newPath[newPath.length - 1];
+        const historyEntry = {
+          id: lastStep.parentId,
+          text: lastStep.parentText,
+          phase: lastStep.phase,
+          drillPath: newPath
+        };
+        
+        updates.navigationHistory = updateHistory(session?.navigationHistory, historyEntry);
+      }
+
+      await updateDoc(sessionRef(sessionId), updates);
     } catch (err) { setError(`Sync-Fehler: ${err.message}`); }
+  };
+
+  const setManualPhase = async (phaseNum) => {
+    if (!isHost) return;
+    await updateDoc(sessionRef(sessionId), { currentPhase: phaseNum });
+  };
+
+  const jumpToHistory = async (item) => {
+    if (!isHost) return;
+    await updateDoc(sessionRef(sessionId), {
+      currentPhase: item.phase + 1,
+      focusId: item.id,
+      drillPath: item.drillPath
+    });
   };
 
   const clearError = () => setError(null);
@@ -189,5 +220,6 @@ export function useRetroStore() {
     // Actions
     loginAdmin, logout, joinSession, createSession, leaveSession,
     addEntry, toggleVote, toggleBlur, setDrillPhase,
+    setManualPhase, jumpToHistory
   };
 }

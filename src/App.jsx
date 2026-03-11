@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, LogOut, Download, Send, ShieldCheck, ClipboardList, Eye, EyeOff, AlertCircle, ChevronLeft, X } from 'lucide-react';
 import { useRetroStore } from './useRetroStore';
-import { CATEGORIES, PHASES, getWinner, BoardView, EmptyState } from './components';
+import { CATEGORIES, getWinner } from './logic';
+import { PHASES, BoardView, EmptyState, ContextSidebar, AdminControlTower } from './components';
 
 export default function App() {
   const store = useRetroStore();
@@ -25,7 +26,7 @@ export default function App() {
     try {
       await store.createSession(sessionName);
       setShowNameModal(false);
-    } catch (e) {
+    } catch {
       // Error handled by store
     } finally {
       setIsCreating(false);
@@ -109,100 +110,111 @@ export default function App() {
         )}
       </header>
 
-      <main className="max-w-md mx-auto p-4 pt-6">
+      <main className="max-w-5xl mx-auto flex flex-col lg:flex-row gap-8 px-4 pt-6 pb-24 items-start w-full">
+        <div className="flex-1 w-full max-w-md mx-auto space-y-4">
 
-        {/* ── Error Banner ── */}
-        {store.error && (
-          <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3 text-red-600 text-sm">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <div className="flex-1 font-semibold whitespace-pre-line leading-snug">{store.error}</div>
-            <button onClick={store.clearError} className="text-slate-400 hover:text-slate-600 shrink-0"><X className="w-4 h-4" /></button>
-          </div>
-        )}
-
-        {/* ════════ LANDING VIEW ════════ */}
-        {!store.session ? (
-          <div className="space-y-8">
-            <div className="text-center space-y-3">
-              <h2 className="text-4xl font-black text-slate-800 tracking-tighter leading-tight">Teams befähigen.<br/><span className="text-indigo-600 underline decoration-indigo-200">Insights sammeln.</span></h2>
+          {/* ── Error Banner ── */}
+          {store.error && (
+            <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3 text-red-600 text-sm">
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              <div className="flex-1 font-semibold whitespace-pre-line leading-snug">{store.error}</div>
+              <button onClick={store.clearError} className="text-slate-400 hover:text-slate-600 shrink-0"><X className="w-4 h-4" /></button>
             </div>
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-white space-y-4">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Session beitreten</label>
-              <div className="flex gap-2">
-                <input id="join-input" type="text" placeholder="CODE" className="flex-1 px-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 uppercase font-mono text-center text-2xl tracking-[0.3em]"/>
-                <button onClick={() => store.joinSession(document.getElementById('join-input').value)} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 active:scale-95 transition-all">GO</button>
+          )}
+
+          {/* ════════ LANDING VIEW ════════ */}
+          {!store.session ? (
+            <div className="space-y-8">
+              <div className="text-center space-y-3">
+                <h2 className="text-4xl font-black text-slate-800 tracking-tighter leading-tight">Teams befähigen.<br/><span className="text-indigo-600 underline decoration-indigo-200">Insights sammeln.</span></h2>
               </div>
-            </div>
-            <div className="relative py-2"><div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200"/></div><div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest text-slate-400"><span className="bg-slate-50 px-4">Scrum Master Area</span></div></div>
-            {store.user && !store.user.isAnonymous ? (
-              <button onClick={() => { setSessionName(`LST Retro ${new Date().toLocaleDateString('de-DE')}`); setShowNameModal(true); }} className="w-full bg-white border-2 border-indigo-600 text-indigo-600 py-5 rounded-[2.5rem] font-black hover:bg-indigo-50 transition-all flex items-center justify-center gap-3 shadow-lg"><Plus className="w-6 h-6"/> Neue Session hosten</button>
-            ) : (
-              <button onClick={store.loginAdmin} className="w-full bg-slate-900 text-white py-5 rounded-[2.5rem] font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95"><ShieldCheck className="w-6 h-6 text-indigo-400"/> Admin Login</button>
-            )}
-          </div>
-        ) : (
-
-          // ════════ SESSION VIEW ════════
-          <div className="space-y-4">
-
-            {/* Breadcrumbs */}
-            {store.drillPath.length > 0 && (
-              <div className="space-y-2">
-                {store.isHost && (
-                  <button onClick={handleDrillBack} className="flex items-center gap-2 text-indigo-600 font-black text-sm bg-white/70 px-4 py-2.5 rounded-2xl border border-indigo-100 shadow-sm hover:bg-white active:scale-95 transition-all"><ChevronLeft className="w-4 h-4"/> Zurück zu {PHASES[store.drillPath[store.drillPath.length - 1].phase]?.label}</button>
-                )}
-                <div className="bg-white/60 border border-slate-100 rounded-2xl px-4 py-3 space-y-2">
-                  {store.drillPath.map((step, i) => (
-                    <div key={i} className="flex items-start gap-2"><span className="text-xs mt-0.5">{PHASES[step.phase]?.icon}</span><p className="text-[13px] font-semibold text-slate-600 leading-snug line-clamp-2 flex-1">{step.parentText}</p></div>
-                  ))}
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-white space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Session beitreten</label>
+                <div className="flex gap-2">
+                  <input id="join-input" type="text" placeholder="CODE" className="flex-1 px-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 uppercase font-mono text-center text-2xl tracking-[0.3em]"/>
+                  <button onClick={() => store.joinSession(document.getElementById('join-input').value)} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 active:scale-95 transition-all">GO</button>
                 </div>
               </div>
-            )}
-
-            {/* Control Bar */}
-            <div className="flex justify-between items-center bg-white/80 p-3.5 rounded-3xl border border-slate-100 shadow-sm">
-              <div className="flex items-center gap-2.5">
-                <div className="bg-indigo-600 text-white px-3.5 py-1.5 rounded-full font-mono font-black tracking-widest text-sm shadow-md">{store.sessionId}</div>
-                {store.isHost && <button onClick={store.toggleBlur} className={`p-2.5 rounded-full transition-all ${store.session.isBlurred ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>{store.session.isBlurred ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}</button>}
-                {inDrill && !store.isHost && <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${phase.pill}`}>Moderiert</span>}
-              </div>
-              {store.isHost && <button onClick={exportCSV} className="text-slate-400 hover:text-indigo-600 p-2 bg-slate-50 rounded-xl"><Download className="w-4 h-4"/></button>}
+              <div className="relative py-2"><div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200"/></div><div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest text-slate-400"><span className="bg-slate-50 px-4">Scrum Master Area</span></div></div>
+              {store.user && !store.user.isAnonymous ? (
+                <button onClick={() => { setSessionName(`LST Retro ${new Date().toLocaleDateString('de-DE')}`); setShowNameModal(true); }} className="w-full bg-white border-2 border-indigo-600 text-indigo-600 py-5 rounded-[2.5rem] font-black hover:bg-indigo-50 transition-all flex items-center justify-center gap-3 shadow-lg"><Plus className="w-6 h-6"/> Neue Session hosten</button>
+              ) : (
+                <button onClick={store.loginAdmin} className="w-full bg-slate-900 text-white py-5 rounded-[2.5rem] font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95"><ShieldCheck className="w-6 h-6 text-indigo-400"/> Admin Login</button>
+              )}
             </div>
+          ) : (
 
-            {/* Phase Badge */}
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-black ${phase.pill}`}>
-              {phase.icon} Phase {store.currentPhase}: {phase.label} <span className="opacity-40">·</span> <span className="opacity-70">{store.displayEntries.length} Einträge</span>
-            </div>
+            // ════════ SESSION VIEW ════════
+            <div className="space-y-4">
 
-            {/* Input Card */}
-            <div className="bg-white p-5 rounded-[2rem] shadow-lg border border-white space-y-4">
-              {store.currentPhase === 1 && (
-                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                  {CATEGORIES.map(cat => (
-                    <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-black border-2 transition-all ${activeCategory === cat.id ? `${cat.color} border-current` : 'bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100'}`}>{cat.icon} {cat.label}</button>
-                  ))}
+              {/* Breadcrumbs */}
+              {store.drillPath.length > 0 && (
+                <div className="space-y-2">
+                  {store.isHost && (
+                    <button onClick={handleDrillBack} className="flex items-center gap-2 text-indigo-600 font-black text-sm bg-white/70 px-4 py-2.5 rounded-2xl border border-indigo-100 shadow-sm hover:bg-white active:scale-95 transition-all"><ChevronLeft className="w-4 h-4"/> Zurück zu {PHASES[store.drillPath[store.drillPath.length - 1].phase]?.label}</button>
+                  )}
+                  <div className="bg-white/60 border border-slate-100 rounded-2xl px-4 py-3 space-y-2">
+                    {store.drillPath.map((step, i) => (
+                      <div key={i} className="flex items-start gap-2"><span className="text-xs mt-0.5">{PHASES[step.phase]?.icon}</span><p className="text-[13px] font-semibold text-slate-600 leading-snug line-clamp-2 flex-1">{step.parentText}</p></div>
+                    ))}
+                  </div>
                 </div>
               )}
-              <div className="relative">
-                <textarea placeholder={store.currentPhase === 1 ? `Teile deine Gedanken zu "${activeCategory}"…` : `${phase.label}: Deine Antwort…`} className="w-full bg-slate-50 p-4 rounded-3xl text-sm min-h-[100px] focus:ring-4 focus:ring-indigo-100 border-none outline-none resize-none font-medium leading-relaxed" value={newEntry} onChange={e => setNewEntry(e.target.value)} />
-                <button onClick={handleAddEntry} disabled={!newEntry.trim()} className="absolute bottom-3 right-3 bg-indigo-600 text-white p-3 rounded-2xl shadow-xl disabled:opacity-30 hover:bg-indigo-700 active:scale-90 transition-all"><Send className="w-4 h-4"/></button>
-              </div>
-            </div>
 
-            {/* Board Feed */}
-            <BoardView 
-              entries={store.displayEntries} 
-              currentPhase={store.currentPhase} 
-              user={store.user} 
-              session={store.session} 
-              phase={phase} 
-              toggleVote={store.toggleVote} 
-              winnerId={winner?.id} 
-              onDrill={store.isHost ? handleDrillInto : null} 
-            />
+              {/* Control Bar */}
+              <div className="flex justify-between items-center bg-white/80 p-3.5 rounded-3xl border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-2.5">
+                  <div className="bg-indigo-600 text-white px-3.5 py-1.5 rounded-full font-mono font-black tracking-widest text-sm shadow-md">{store.sessionId}</div>
+                  {store.isHost && <button onClick={store.toggleBlur} className={`p-2.5 rounded-full transition-all ${store.session.isBlurred ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>{store.session.isBlurred ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}</button>}
+                  {inDrill && !store.isHost && <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${phase.pill}`}>Moderiert</span>}
+                </div>
+                {store.isHost && <button onClick={exportCSV} className="text-slate-400 hover:text-indigo-600 p-2 bg-slate-50 rounded-xl"><Download className="w-4 h-4"/></button>}
+              </div>
+
+              {/* Phase Badge */}
+              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-black ${phase.pill}`}>
+                {phase.icon} Phase {store.currentPhase}: {phase.label} <span className="opacity-40">·</span> <span className="opacity-70">{store.displayEntries.length} Einträge</span>
+              </div>
+
+              {/* Input Card */}
+              <div className="bg-white p-5 rounded-[2rem] shadow-lg border border-white space-y-4">
+                {store.currentPhase === 1 && (
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                    {CATEGORIES.map(cat => (
+                      <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-black border-2 transition-all ${activeCategory === cat.id ? `${cat.color} border-current` : 'bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100'}`}>{cat.icon} {cat.label}</button>
+                    ))}
+                  </div>
+                )}
+                <div className="relative">
+                  <textarea placeholder={store.currentPhase === 1 ? `Teile deine Gedanken zu "${activeCategory}"…` : `${phase.label}: Deine Antwort…`} className="w-full bg-slate-50 p-4 rounded-3xl text-sm min-h-[100px] focus:ring-4 focus:ring-indigo-100 border-none outline-none resize-none font-medium leading-relaxed" value={newEntry} onChange={e => setNewEntry(e.target.value)} />
+                  <button onClick={handleAddEntry} disabled={!newEntry.trim()} className="absolute bottom-3 right-3 bg-indigo-600 text-white p-3 rounded-2xl shadow-xl disabled:opacity-30 hover:bg-indigo-700 active:scale-90 transition-all"><Send className="w-4 h-4"/></button>
+                </div>
+              </div>
+
+              {/* Board Feed */}
+              <BoardView 
+                entries={store.displayEntries} 
+                currentPhase={store.currentPhase} 
+                user={store.user} 
+                session={store.session} 
+                phase={phase} 
+                toggleVote={store.toggleVote} 
+                winnerId={winner?.id} 
+                onDrill={store.isHost ? handleDrillInto : null} 
+              />
+            </div>
+          )}
+        </div>
+
+        {/* ── Context Sidebar ── */}
+        {store.session && (
+          <div className="flex flex-col gap-4">
+            {store.isHost && <AdminControlTower store={store} />}
+            <ContextSidebar drillPath={store.drillPath} currentPhase={store.currentPhase} />
           </div>
         )}
       </main>
+
 
       {/* ── Status Bar ── */}
       {store.session && (

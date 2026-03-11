@@ -1,7 +1,86 @@
-⚓ Retro-Lite v2Retro-Lite ist ein hochperformantes, moderationsgeführtes Retrospektiven-Tool für agile Teams. Es wurde speziell entwickelt, um den "Bias" in Meetings zu eliminieren und durch einen strukturierten Drill-Down-Workflow von Problemen zu echten Massnahmen zu gelangen.🚀 Key FeaturesReal-Time Sync: Nahtlose Synchronisation zwischen Admin (Scrum Master) und Teilnehmern via Firebase Firestore (Region: Frankfurt).Guided Workflow: Geführter Prozess durch 4 Phasen:Gather Data (4L): Liked, Learned, Lacked, Longed For.Ursachenforschung: Deep-Dive in die wichtigsten "Anker".Lösungs-Brainstorming: Kollaborative Ideenfindung.Massnahmen: Verbindliche Definition von Action Items (Owner/Deadline).Anti-Bias Blur: Verdeckte Karten während der Schreibphase zur Vermeidung von Gruppendenken.Winner-Logic: Mathematische Ermittlung der Karten mit den höchsten Votes zur automatischen Prozesssteuerung.PWA Ready: Kann als Standalone-App auf Smartphones installiert werden.🛠 Tech Stack & ArchitekturDie App folgt modernen Software-Architektur-Prinzipien:Frontend: React 18 mit Vite für ultraschnelle Development-Cycles.Backend: Firebase (Authentication & Cloud Firestore).Styling: Tailwind CSS für ein responsives "Boutique-UI".Modularität:useRetroStore.js: Zentraler Custom Hook für State & Firebase-Logik.components.jsx: Funktionale UI-Komponenten und Pure Logic.App.jsx: View-Komposition und Routing.🚦 Getting StartedVoraussetzungenNode.js (v18+)Ein Firebase-Projekt (Region Frankfurt empfohlen)InstallationRepository klonenAbhängigkeiten installieren:npm install
-Umgebungsvariablen konfigurieren (.env.local):VITE_FIREBASE_API_KEY=dein_key
-VITE_FIREBASE_PROJECT_ID=retro-lite-v2
-...
-Server starten:npm run dev
-🧪 TestingQualitätssicherung durch zweistufiges Testing:Unit Tests (Vitest): Validierung der Kernlogik (Voting-Algorithmen, Phasen-Filter).npm test
-BDD (Cucumber/Playwright): Automatisierte End-to-End Tests des Teilnehmer-Workflows (Coming Soon).🛡 Sicherheitsregeln (Firestore)Das Projekt nutzt granulare Sicherheitsregeln, um sicherzustellen, dass:Nur authentifizierte Admins Sessions erstellen können.Anonyme Teilnehmer nur innerhalb ihrer Session agieren dürfen.Die parentId-Hierarchie bei Schreibzugriffen gewahrt bleibt.👨‍💻 AuthorStephan (Technical Enabler / Scrum Master @ LST)Created with Passion for Agile Excellence.
+# Retro-Lite v2 🚀
+
+[![CI](https://github.com/stefanasemota/retro-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/stefanasemota/retro-lite/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+**Retro-Lite** is a premium, real-time collaboration tool designed to turn messy team discussions into actionable results. By following a structured 4-step drill-down process, it ensures no insight is lost and every problem finds its owner.
+
+---
+
+## 📖 Table of Contents
+1. [Core Features](#-core-features)
+2. [Getting Started](#-getting-started)
+3. [The 4-Step Workflow](#-the-4-step-workflow)
+4. [Architecture](#-architecture)
+5. [Development](#-development)
+
+---
+
+## ✨ Core Features
+- **Real-time Sync**: Powered by Firebase Firestore for zero-latency collaboration.
+- **Context Sidebar**: A permanent "Red Thread" view so participants never lose focus.
+- **Admin Control Tower**: Advanced navigation and phase control for facilitators.
+- **Privacy First**: Dynamic "Blur" mode to prevent cognitive bias during brainstorming.
+- **Export**: Instant CSV export for reporting.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v18+)
+- Firebase Project
+
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/stefanasemota/retro-lite.git
+   cd retro-lite
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables:
+   Create a `.env.local` file with your Firebase credentials:
+   ```env
+   VITE_FIREBASE_API_KEY=your_key
+   ...
+   ```
+4. Start development:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## 🔄 The 4-Step Workflow
+1. **⛵ Segelboot (Gather Data)**: Brainstorming using the 4L method (Liked, Learned, Lacked, Longed For).
+2. **🔍 Insights (Generate Insights)**: Deep-dive into the "Why" of the winning cards.
+3. **💡 Solutions (Decide What to Do)**: Brainstorming actionable solutions.
+4. **✅ Actions (Concrete Actions)**: Assigning owners and deadlines.
+
+---
+
+## 🏗️ Architecture
+The project follows a modular React architecture with a focus on pure logic extraction for testability.
+- **Frontend**: React + Tailwind CSS + Lucide Icons.
+- **Database**: Firestore (Real-time Config).
+- **Testing**: Vitest + JSDOM.
+
+Detailed documentation can be found in `docs/ARCHITECTURE.md`.
+
+---
+
+## 🛠️ Development
+
+### Scripts
+- `npm run dev`: Start Vite development server.
+- `npm run build`: Build production bundle.
+- `npm test`: Run unit tests with Vitest.
+- `npm run lint`: Run ESLint checks.
+
+---
+
+## ⚖️ License
+Distributed under the MIT License. See `LICENSE` for more information.
