@@ -71,6 +71,11 @@ export default function App() {
     return <div className="h-screen flex items-center justify-center bg-indigo-50 text-indigo-600 font-bold">LST Engine startet…</div>;
   }
 
+  // Signaling for BDD tests
+  if (window.location.search.includes('testMode=true')) {
+    console.log('App Ready for Testing');
+  }
+
   return (
     <div className={`min-h-screen ${phase.bg} text-slate-900 font-sans pb-24 transition-colors duration-500`}>
 

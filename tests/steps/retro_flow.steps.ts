@@ -33,6 +33,7 @@ Given('ich bin auf der Startseite im Test-Modus', async function () {
 
 When('ich eine neue Session namens {string} erstelle', async function (sessionName) {
   await page.click('[data-testid="host-session-button"]');
+  await page.waitForSelector('[data-testid="session-name-input"]', { state: 'attached', timeout: 5000 });
   await page.fill('[data-testid="session-name-input"]', sessionName);
   await page.click('[data-testid="btn-create-session"]');
   await page.waitForSelector('[data-testid="entry-input"]', { state: 'visible' });
