@@ -1,13 +1,15 @@
-import { Given, When, Then, Before, After } from '@cucumber/cucumber';
+import { Given, When, Then, Before, After, setDefaultTimeout } from '@cucumber/cucumber';
 import { chromium, Browser, Page, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
+
+setDefaultTimeout(10000);
 
 let browser: Browser;
 let page: Page;
 
 Before(async function () {
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ headless: process.env.CI ? true : false });
   page = await browser.newPage();
 });
 
@@ -33,6 +35,7 @@ When('ich eine neue Session namens {string} erstelle', async function (sessionNa
   await page.click('[data-testid="host-session-button"]');
   await page.fill('[data-testid="session-name-input"]', sessionName);
   await page.click('[data-testid="btn-create-session"]');
+  await page.waitForSelector('[data-testid="entry-input"]', { state: 'visible' });
 });
 
 When('ich eine Karte {string} in der Kategorie {string} schreibe', async function (text, category) {
