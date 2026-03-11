@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [ main ]
 
-# Wir setzen die Node-Umgebung für den gesamten Workflow auf die Zukunft
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   VITE_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
@@ -24,7 +23,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Erforderlich für den SonarCloud-Scan
+          fetch-depth: 0
 
       - name: Setup Node.js (LTS 24)
         uses: actions/setup-node@v4
@@ -39,10 +38,10 @@ jobs:
         run: npm run lint
 
       - name: Run Unit Tests with Coverage
-        run: npm test -- --coverage # Generiert den LCOV-Report
+        run: npm test -- --coverage
 
       - name: SonarCloud Scan
-        uses: sonarsource/sonarqube-scan-action@v4
+        uses: sonarsource/sonarqube-scan-action@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
