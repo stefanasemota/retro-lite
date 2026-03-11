@@ -1,20 +1,25 @@
-Feature: Full Retro Flow
+# language: de
+Funktionalität: Vollständiger Retro Flow
 
-  Scenario: Complete retrospective cycle from Phase 1 to Phase 4
-    Given I am on the start page in test mode
-    When I create a new session named "BDD Test Session"
-    And I enter "I liked the new features" in the category "liked"
-    And I reveal the board
-    And I vote for the card "I liked the new features"
-    And I identify the winner and start "Ursachenforschung"
-    Then the sidebar should show the anchor "I liked the new features"
-    
-    When I enter the cause "Good team collaboration"
-    And I vote for the cause "Good team collaboration"
-    And I identifying the cause winner and start "Lösung finden"
-    Then the sidebar should show anchor and cause "Good team collaboration"
+  Szenario: Kompletter Retrospektive-Zyklus von Phase 1 bis Phase 4
+    Gegeben sei ich bin auf der Startseite im Test-Modus
+    Wenn ich eine neue Session namens "BDD Test Session" erstelle
+    Und ich eine Karte "Wir haben gute Unit Tests" in der Kategorie "liked" schreibe
+    Und ich den Blur deaktiviere
+    Und ich für die Karte "Wir haben gute Unit Tests" vote
+    Und ich den Gewinner ermittle und mit "Ursachenforschung" starte
+    Dann sollte die Sidebar den Anker "Wir haben gute Unit Tests" zeigen
 
-    When I enter the solution "Maintain high transparency"
-    And I vote for the solution "Maintain high transparency"
-    And I identify the solution winner and start "Massnahme festlegen"
-    Then the sidebar should show the full context trail ⚓ 🔍 💡
+    Wenn ich die Ursache "Gute Vorbereitung" eingebe
+    Und ich für die Ursache "Gute Vorbereitung" vote
+    Und ich den Ursachen-Gewinner ermittle und mit "Lösung finden" starte
+    Dann sollte die Sidebar Anker und Ursache "Gute Vorbereitung" zeigen
+
+    Wenn ich die Lösung "Review-Prozess beibehalten" eingebe
+    Und ich für die Lösung "Review-Prozess beibehalten" vote
+    Und ich den Lösungs-Gewinner ermittle und mit "Massnahme festlegen" starte
+    Dann sollte die Sidebar den vollen Kontext-Pfad ⚓ 🔍 💡 zeigen
+
+    Wenn ich die Massnahme "Checkliste aktualisieren" eingebe
+    Und ich für die Massnahme "Checkliste aktualisieren" vote
+    Dann sollte die Karte "Checkliste aktualisieren" als finaler Winner markiert sein
