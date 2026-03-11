@@ -2,7 +2,7 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   pull_request:
     branches: [ main ]
 
@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Erforderlich für den SonarCloud-Scan
 
       - name: Setup Node.js (LTS 24)
         uses: actions/setup-node@v4
@@ -36,8 +38,14 @@ jobs:
       - name: Run Linting
         run: npm run lint
 
-      - name: Run Unit Tests
-        run: npm test
+      - name: Run Unit Tests with Coverage
+        run: npm test -- --coverage # Generiert den LCOV-Report
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Build Application
         run: npm run build
