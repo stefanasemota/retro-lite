@@ -13,7 +13,7 @@ Before(async function () {
 
 After(async function (scenario) {
   // Collect coverage if available
-  const coverage = await page.evaluate(() => window.__coverage__);
+  const coverage = await page.evaluate('window.__coverage__');
   if (coverage) {
     const coverageDir = path.join(process.cwd(), '.nyc_output');
     if (!fs.existsSync(coverageDir)) fs.mkdirSync(coverageDir);

@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run --coverage",
-    "test:bdd": "cucumber-js tests/features/full_retro_flow.feature --import tests/steps/retro_flow.steps.ts --format progress",
+    "test:bdd": "NODE_OPTIONS='--loader ts-node/esm --no-warnings' cucumber-js tests/features/full_retro_flow.feature --import tests/steps/retro_flow.steps.ts --format progress",
     "test:all": "npm test && npm run test:bdd"
   },
   "dependencies": {
@@ -37,6 +37,7 @@
     "playwright": "^1.42.0",
     "postcss": "^8.5.8",
     "tailwindcss": "^3.4.19",
+    "ts-node": "^10.9.2",
     "vite": "^7.3.1",
     "vite-plugin-istanbul": "^8.0.0",
     "vitest": "^4.0.18",
