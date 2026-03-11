@@ -59,13 +59,23 @@ export function useRetroStore() {
       const isStephan = role === 'admin';
       console.log(`%c[Retro-Lite] BDD Test Mode Active: ${role}`, 'background:#4338ca;color:#fff;padding:2px 8px;border-radius:4px');
       
-      setUser({ 
-        uid: isStephan ? 'test-admin' : 'test-participant', 
-        email: isStephan ? 'stephan.admin@lst.de' : 'michael.part@lst.de', 
-        displayName: isStephan ? 'Stephan Admin' : 'Michael Participant', 
-        isAnonymous: !isStephan 
-      });
-      setLoading(false);
+      const initTest = async () => {
+        try {
+          const cred = await signInAnonymously(auth);
+          console.log(`[STORE] BDD Auth success: ${cred.user.uid}`);
+          setUser({ 
+            uid: cred.user.uid, // Use real UID from Firebase for Firestore permissions
+            email: isStephan ? 'stephan.admin@lst.de' : 'michael.part@lst.de', 
+            displayName: isStephan ? 'Stephan Admin' : 'Michael Participant', 
+            isAnonymous: false // Pretend to be non-anonymous so createSession logic allows it
+          });
+          setLoading(false);
+        } catch (e) {
+          console.error('[STORE] BDD Auth failed:', e);
+          setLoading(false);
+        }
+      };
+      initTest();
       return;
     }
 
@@ -84,15 +94,26 @@ export function useRetroStore() {
   useEffect(() => {
     if (!user || !sessionId) return;
     const unsubSession = onSnapshot(sessionRef(sessionId), snap => {
-      if (snap.exists()) setSession(snap.data());
-      else { setSessionId(''); setSession(null); }
-    }, () => setError('Verbindung zur Session verloren.'));
+      if (snap.exists()) {
+        setSession(snap.data());
+      } else { 
+        // Only clear if we're not in the middle of a creation/transition (simple safeguard)
+        setSessionId(''); 
+        setSession(null); 
+      }
+    }, (err) => {
+      console.error(`[STORE] Session error: ${err.message}`);
+      setError('Verbindung zur Session verloren.');
+    });
 
     const unsubEntries = onSnapshot(entriesRef(sessionId), snap => {
       setAllEntries(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }, () => setError('Fehler beim Laden der Einträge.'));
 
-    return () => { unsubSession(); unsubEntries(); };
+    return () => { 
+      unsubSession(); 
+      unsubEntries(); 
+    };
   }, [user, sessionId]);
 
   // Derived State
@@ -134,23 +155,30 @@ export function useRetroStore() {
   };
 
   const createSession = async (sessionName) => {
-    if (!user || user.isAnonymous) throw new Error('Nur Admins können Sessions erstellen.');
+    if (!user || user.isAnonymous) {
+      throw new Error('Nur Admins können Sessions erstellen.');
+    }
     if (!sessionName.trim()) throw new Error('Bitte einen Session-Namen eingeben.');
     if (!db) throw new Error('Firestore ist nicht initialisiert.');
     
     const newId = Math.random().toString(36).substring(2, 8).toUpperCase();
-    await setDoc(sessionRef(newId), {
-      id:           newId,
-      sessionName:  sessionName.trim(),
-      hostId:       user.uid,
-      createdAt:    serverTimestamp(),
-      isBlurred:    true,
-      currentPhase: 1,
-      focusId:      null,
-      drillPath:    [],
-      navigationHistory: [],
-    });
-    setSessionId(newId);
+    try {
+      await setDoc(sessionRef(newId), {
+        id:           newId,
+        sessionName:  sessionName.trim(),
+        hostId:       user.uid,
+        createdAt:    serverTimestamp(),
+        isBlurred:    true,
+        currentPhase: 1,
+        focusId:      null,
+        drillPath:    [],
+        navigationHistory: [],
+      });
+      setSessionId(newId);
+    } catch (err) {
+      console.error(`[STORE] Firestore write FAILED: ${err.message}`);
+      throw err;
+    }
   };
 
   const leaveSession = () => setSessionId('');

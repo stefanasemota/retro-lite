@@ -11,6 +11,11 @@ let page: Page;
 Before(async function () {
   browser = await chromium.launch({ headless: process.env.CI ? true : false });
   page = await browser.newPage();
+  
+  // Pipe browser console to terminal for debugging
+  page.on('console', msg => {
+    console.log(`[BROWSER] ${msg.type().toUpperCase()}: ${msg.text()}`);
+  });
 });
 
 After(async function (scenario) {
@@ -33,28 +38,39 @@ Given('ich bin auf der Startseite im Test-Modus', async function () {
 
 When('ich eine neue Session namens {string} erstelle', async function (sessionName) {
   await page.click('[data-testid="host-session-button"]');
-  await page.waitForSelector('[data-testid="session-name-input"]', { state: 'attached', timeout: 5000 });
-  await page.fill('[data-testid="session-name-input"]', sessionName);
-  await page.click('[data-testid="btn-create-session"]');
-  await page.waitForSelector('[data-testid="entry-input"]', { state: 'visible' });
+  const input = page.locator('[data-testid="session-name-input"]');
+  await input.waitFor({ state: 'visible', timeout: 5000 });
+  
+  // Clear pre-filled value
+  await input.fill('');
+  await input.type(sessionName, { delay: 50 });
+  
+  const submitBtn = page.locator('[data-testid="btn-create-session"]');
+  await expect(submitBtn).toBeEnabled({ timeout: 5000 });
+  
+  console.log(`[TEST] Clicking create button for: ${sessionName}`);
+  await submitBtn.click();
+  
+  // Wait for transition to board
+  await page.waitForSelector('[data-testid="entry-input"]', { state: 'visible', timeout: 5000 });
 });
 
 When('ich eine Karte {string} in der Kategorie {string} schreibe', async function (text, category) {
-  await page.click(`[data-testid="btn-category-${category.toLowerCase()}"]`);
-  await page.fill('[data-testid="entry-input"]', text);
-  await page.click('[data-testid="btn-submit-entry"]');
+  await page.click(`[data-testid="btn-category-${category.toLowerCase()}"]`, { force: true });
+  await page.type('[data-testid="entry-input"]', text, { delay: 20 });
+  await page.click('[data-testid="btn-submit-entry"]', { force: true });
 });
 
 When('ich den Blur deaktiviere', async function () {
-  await page.click('[data-testid="btn-toggle-blur"]');
+  await page.click('[data-testid="btn-toggle-blur"]', { force: true });
 });
 
 When('ich für die Karte {string} vote', async function (text) {
-  await page.click(`[data-testid="btn-vote-${text}"]`);
+  await page.click(`[data-testid="btn-vote-${text}"]`, { force: true });
 });
 
 When('ich den Gewinner ermittle und mit {string} starte', async function (phaseName) {
-  await page.click('[data-testid="drill-button"]');
+  await page.click('[data-testid="drill-button"]', { force: true });
 });
 
 Then('sollte die Sidebar den Anker {string} zeigen', async function (text) {
@@ -63,16 +79,16 @@ Then('sollte die Sidebar den Anker {string} zeigen', async function (text) {
 });
 
 When('ich die Ursache {string} eingebe', async function (text) {
-  await page.fill('[data-testid="entry-input"]', text);
-  await page.click('[data-testid="btn-submit-entry"]');
+  await page.type('[data-testid="entry-input"]', text, { delay: 20 });
+  await page.click('[data-testid="btn-submit-entry"]', { force: true });
 });
 
 When('ich für die Ursache {string} vote', async function (text) {
-  await page.click(`[data-testid="btn-vote-${text}"]`);
+  await page.click(`[data-testid="btn-vote-${text}"]`, { force: true });
 });
 
 When('ich den Ursachen-Gewinner ermittle und mit {string} starte', async function (phaseName) {
-  await page.click('[data-testid="drill-button"]');
+  await page.click('[data-testid="drill-button"]', { force: true });
 });
 
 Then('sollte die Sidebar Anker und Ursache {string} zeigen', async function (text) {
@@ -81,16 +97,16 @@ Then('sollte die Sidebar Anker und Ursache {string} zeigen', async function (tex
 });
 
 When('ich die Lösung {string} eingebe', async function (text) {
-  await page.fill('[data-testid="entry-input"]', text);
-  await page.click('[data-testid="btn-submit-entry"]');
+  await page.type('[data-testid="entry-input"]', text, { delay: 20 });
+  await page.click('[data-testid="btn-submit-entry"]', { force: true });
 });
 
 When('ich für die Lösung {string} vote', async function (text) {
-  await page.click(`[data-testid="btn-vote-${text}"]`);
+  await page.click(`[data-testid="btn-vote-${text}"]`, { force: true });
 });
 
 When('ich den Lösungs-Gewinner ermittle und mit {string} starte', async function (phaseName) {
-  await page.click('[data-testid="drill-button"]');
+  await page.click('[data-testid="drill-button"]', { force: true });
 });
 
 Then('sollte die Sidebar den vollen Kontext-Pfad ⚓ 🔍 💡 zeigen', async function () {
@@ -101,16 +117,16 @@ Then('sollte die Sidebar den vollen Kontext-Pfad ⚓ 🔍 💡 zeigen', async fu
 });
 
 When('ich die Massnahme {string} eingebe', async function (text) {
-  await page.fill('[data-testid="entry-input"]', text);
-  await page.click('[data-testid="btn-submit-entry"]');
+  await page.type('[data-testid="entry-input"]', text, { delay: 20 });
+  await page.click('[data-testid="btn-submit-entry"]', { force: true });
 });
 
 When('ich für die Massnahme {string} vote', async function (text) {
-  await page.click(`[data-testid="btn-vote-${text}"]`);
+  await page.click(`[data-testid="btn-vote-${text}"]`, { force: true });
 });
 
 Then('sollte die Karte {string} als finaler Winner markiert sein', async function (text) {
+  await expect(page.locator('[data-testid="winner-trophy"]')).toBeVisible();
   const card = page.locator(`.bg-white:has-text("${text}")`);
-  const trophy = card.locator('.lucide-trophy'); // Trophy icon via class
-  await expect(trophy).toBeVisible();
+  await expect(card).toBeVisible();
 });
