@@ -63,10 +63,11 @@
 ---
 
 ## 🏗️ Architecture
-The project follows a modular React architecture with a focus on pure logic extraction for testability.
-- **Frontend**: React + Tailwind CSS + Lucide Icons.
-- **Database**: Firestore (Real-time Config).
-- **Testing**: Vitest + JSDOM.
+The project follows a modular React architecture with a clear separation of concerns:
+- **`logic.js`**: Pure business logic (Winners, Phases, Rules) - 100% testable.
+- **`components.jsx`**: Reusable UI components (EntryCard, BoardView, Sidebar).
+- **`App.jsx`**: Main application container and view orchestration.
+- **`useRetroStore.js`**: Custom hook encapsulating Firebase & State management.
 
 Detailed documentation can be found in `docs/ARCHITECTURE.md`.
 

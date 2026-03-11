@@ -98,7 +98,7 @@ export function useRetroStore() {
   }, [user, sessionId]);
 
   // Derived State
-  const currentPhase = calculateCurrentPhase(session?.drillPath);
+  const currentPhase = session?.currentPhase || calculateCurrentPhase(session?.drillPath);
   const focusId      = session?.focusId ?? null;
   const drillPath    = session?.drillPath ?? [];
   const isHost       = session?.hostId === user?.uid;
