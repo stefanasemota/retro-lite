@@ -23,20 +23,10 @@ try {
     messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
     appId:             import.meta.env.VITE_FIREBASE_APP_ID,
   };
-
-  // Failsafe for CI: If API Key is missing, use dummy config to allow app to start
-  if (!cfg.apiKey && window.location.search.includes('testMode=true')) {
-    cfg.apiKey = 'dummy-key-for-testing';
-    cfg.projectId = 'retro-lite-v2';
-    console.warn('[Retro-Lite] Using dummy Firebase config for BDD testing');
-  }
-
-  if (cfg.apiKey) {
-    console.log('%c[Retro-Lite] Frankfurt Init', 'background:#ea580c;color:#fff;padding:2px 8px;border-radius:4px', cfg.projectId);
-    app  = initializeApp(cfg);
-    auth = getAuth(app);
-    db   = getFirestore(app);
-  }
+  if (cfg.apiKey) console.log('%c[Retro-Lite] Frankfurt Init', 'background:#ea580c;color:#fff;padding:2px 8px;border-radius:4px', cfg.projectId);
+  app  = initializeApp(cfg);
+  auth = getAuth(app);
+  db   = getFirestore(app);
 } catch (e) {
   console.error('Firebase init failed', e);
 }
@@ -71,9 +61,9 @@ export function useRetroStore() {
       
       const initTest = async () => {
         try {
-          if (auth) {
+          // In Local Development/Testing, we want to perform real auth if possible
+          if (auth && !import.meta.env.PROD) {
             const cred = await signInAnonymously(auth);
-            console.log(`[STORE] BDD Auth success: ${cred.user.uid}`);
             setUser({ 
               uid: cred.user.uid,
               email: isStephan ? 'stephan.admin@lst.de' : 'michael.part@lst.de', 
@@ -81,10 +71,16 @@ export function useRetroStore() {
               isAnonymous: false 
             });
           } else {
-            throw new Error('Auth not initialized');
+            // Fallback for mock behavior
+            setUser({ 
+              uid: isStephan ? 'test-admin' : 'test-participant', 
+              email: isStephan ? 'stephan.admin@lst.de' : 'michael.part@lst.de', 
+              displayName: isStephan ? 'Stephan Admin' : 'Michael Participant', 
+              isAnonymous: false 
+            });
           }
         } catch (e) {
-          console.warn('[STORE] BDD Auth fallback (no Firebase):', e.message);
+          console.warn('[STORE] BDD Auth failed, using mock state:', e.message);
           setUser({ 
             uid: isStephan ? 'test-admin' : 'test-participant', 
             email: isStephan ? 'stephan.admin@lst.de' : 'michael.part@lst.de', 

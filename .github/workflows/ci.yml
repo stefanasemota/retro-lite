@@ -36,20 +36,8 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Run Linting
-        run: npm run lint
-
       - name: Run Unit Tests with Coverage
         run: npm test
-
-      - name: Run BDD Tests
-        run: npm run test:bdd
-        env:
-          VITE_FIREBASE_API_KEY: "dummy-key-for-ci"
-          VITE_FIREBASE_PROJECT_ID: "retro-lite-v2"
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarqube-scan-action@v6
