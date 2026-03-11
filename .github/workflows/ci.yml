@@ -9,6 +9,12 @@ on:
 # Wir setzen die Node-Umgebung für den gesamten Workflow auf die Zukunft
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  VITE_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+  VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+  VITE_FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+  VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+  VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+  VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
 
 jobs:
   build-and-test:
@@ -16,7 +22,6 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        # v4 ist bereits kompatibel, wird aber hier unter Node 24 ausgeführt
         uses: actions/checkout@v4
 
       - name: Setup Node.js (LTS 24)
@@ -28,11 +33,11 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      - name: Run Linting
+        run: npm run lint
+
       - name: Run Unit Tests
         run: npm test
 
       - name: Build Application
         run: npm run build
-        env:
-          VITE_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
-          VITE_FIREBASE_PROJECT_ID: "retro-lite-v2"

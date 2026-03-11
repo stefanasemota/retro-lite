@@ -82,8 +82,8 @@ export default function App() {
               <h2 className="font-black text-xl tracking-tight">Session benennen</h2>
               <button onClick={() => setShowNameModal(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5"/></button>
             </div>
-            <input autoFocus placeholder="z.B. Sprint 42" className="w-full px-5 py-4 bg-slate-50 rounded-2xl font-semibold border-none outline-none focus:ring-4 focus:ring-indigo-100" value={sessionName} onChange={e => setSessionName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleCreateSession()} />
-            <button onClick={handleCreateSession} disabled={isCreating || !sessionName.trim()} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 disabled:opacity-50 hover:bg-indigo-700 transition-all">
+            <input data-testid="session-name-input" autoFocus placeholder="z.B. Sprint 42" className="w-full px-5 py-4 bg-slate-50 rounded-2xl font-semibold border-none outline-none focus:ring-4 focus:ring-indigo-100" value={sessionName} onChange={e => setSessionName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleCreateSession()} />
+            <button data-testid="confirm-create-button" onClick={handleCreateSession} disabled={isCreating || !sessionName.trim()} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 disabled:opacity-50 hover:bg-indigo-700 transition-all">
               {isCreating ? 'Erstelle Session…' : <><Plus className="w-5 h-5"/> Session starten</>}
             </button>
           </div>
@@ -131,13 +131,13 @@ export default function App() {
               <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-white space-y-4">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Session beitreten</label>
                 <div className="flex gap-2">
-                  <input id="join-input" type="text" placeholder="CODE" className="flex-1 px-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 uppercase font-mono text-center text-2xl tracking-[0.3em]"/>
-                  <button onClick={() => store.joinSession(document.getElementById('join-input').value)} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 active:scale-95 transition-all">GO</button>
+                  <input id="join-input" data-testid="join-input" type="text" placeholder="CODE" className="flex-1 px-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 uppercase font-mono text-center text-2xl tracking-[0.3em]"/>
+                  <button data-testid="join-button" onClick={() => store.joinSession(document.getElementById('join-input').value)} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 active:scale-95 transition-all">GO</button>
                 </div>
               </div>
               <div className="relative py-2"><div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200"/></div><div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest text-slate-400"><span className="bg-slate-50 px-4">Scrum Master Area</span></div></div>
               {store.user && !store.user.isAnonymous ? (
-                <button onClick={() => { setSessionName(`LST Retro ${new Date().toLocaleDateString('de-DE')}`); setShowNameModal(true); }} className="w-full bg-white border-2 border-indigo-600 text-indigo-600 py-5 rounded-[2.5rem] font-black hover:bg-indigo-50 transition-all flex items-center justify-center gap-3 shadow-lg"><Plus className="w-6 h-6"/> Neue Session hosten</button>
+                <button data-testid="host-session-button" onClick={() => { setSessionName(`LST Retro ${new Date().toLocaleDateString('de-DE')}`); setShowNameModal(true); }} className="w-full bg-white border-2 border-indigo-600 text-indigo-600 py-5 rounded-[2.5rem] font-black hover:bg-indigo-50 transition-all flex items-center justify-center gap-3 shadow-lg"><Plus className="w-6 h-6"/> Neue Session hosten</button>
               ) : (
                 <button onClick={store.loginAdmin} className="w-full bg-slate-900 text-white py-5 rounded-[2.5rem] font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95"><ShieldCheck className="w-6 h-6 text-indigo-400"/> Admin Login</button>
               )}
@@ -186,8 +186,8 @@ export default function App() {
                   </div>
                 )}
                 <div className="relative">
-                  <textarea placeholder={store.currentPhase === 1 ? `Teile deine Gedanken zu "${activeCategory}"…` : `${phase.label}: Deine Antwort…`} className="w-full bg-slate-50 p-4 rounded-3xl text-sm min-h-[100px] focus:ring-4 focus:ring-indigo-100 border-none outline-none resize-none font-medium leading-relaxed" value={newEntry} onChange={e => setNewEntry(e.target.value)} />
-                  <button onClick={handleAddEntry} disabled={!newEntry.trim()} className="absolute bottom-3 right-3 bg-indigo-600 text-white p-3 rounded-2xl shadow-xl disabled:opacity-30 hover:bg-indigo-700 active:scale-90 transition-all"><Send className="w-4 h-4"/></button>
+                  <textarea data-testid="entry-textarea" placeholder={store.currentPhase === 1 ? `Teile deine Gedanken zu "${activeCategory}"…` : `${phase.label}: Deine Antwort…`} className="w-full bg-slate-50 p-4 rounded-3xl text-sm min-h-[100px] focus:ring-4 focus:ring-indigo-100 border-none outline-none resize-none font-medium leading-relaxed" value={newEntry} onChange={e => setNewEntry(e.target.value)} />
+                  <button data-testid="add-entry-button" onClick={handleAddEntry} disabled={!newEntry.trim()} className="absolute bottom-3 right-3 bg-indigo-600 text-white p-3 rounded-2xl shadow-xl disabled:opacity-30 hover:bg-indigo-700 active:scale-90 transition-all"><Send className="w-4 h-4"/></button>
                 </div>
               </div>
 

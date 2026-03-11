@@ -30,16 +30,16 @@ export function EntryCard({ entry, user, session, phase, toggleVote, isWinner, o
       )}
 
       <div className="flex justify-between items-start gap-3">
-        <p className="text-slate-700 text-[15px] leading-relaxed font-semibold flex-1 pr-2">{entry.text}</p>
-        <button onClick={() => toggleVote(entry.id, entry.voters)}
+        <p data-testid="entry-text" className="text-slate-700 text-[15px] leading-relaxed font-semibold flex-1 pr-2">{entry.text}</p>
+        <button data-testid="vote-button" onClick={() => toggleVote(entry.id, entry.voters)}
           className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl transition-all active:scale-75 shrink-0 ${hasVoted ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-slate-50 text-slate-300 hover:text-indigo-400'}`}>
           <ThumbsUp className={`w-4 h-4 ${hasVoted ? 'fill-current' : ''}`} />
-          <span className="text-[10px] font-black tracking-tighter">{entry.votes || 0}</span>
+          <span data-testid="vote-count" className="text-[10px] font-black tracking-tighter">{entry.votes || 0}</span>
         </button>
       </div>
 
       {isWinner && onDrill && phase.nextLabel && (
-        <button onClick={onDrill}
+        <button data-testid="drill-button" onClick={onDrill}
           className={`mt-3 w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl text-[12px] font-black transition-all active:scale-95 border ${
             phase.nextPhase === 2 ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100' :
             phase.nextPhase === 3 ? 'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100' :
@@ -153,13 +153,13 @@ export function ContextSidebar({ drillPath, currentPhase }) {
                   <div className="absolute left-6 top-10 w-0.5 h-10 bg-slate-200/50 -z-10" />
                 )}
                 
-                <div className={`p-4 rounded-2xl border transition-all ${theme}`}>
+                <div data-testid="sidebar-step" className={`p-4 rounded-2xl border transition-all ${theme}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm">{icon}</span>
                     <span className="text-[9px] font-black uppercase tracking-widest opacity-40">{label}</span>
                     <span className="ml-auto text-[8px] font-bold bg-white/40 px-1.5 py-0.5 rounded-full border border-black/5">P{step.phase}</span>
                   </div>
-                  <p className="text-[12px] font-semibold leading-relaxed line-clamp-3">
+                  <p data-testid="sidebar-step-text" className="text-[12px] font-semibold leading-relaxed line-clamp-3">
                     {step.parentText}
                   </p>
                 </div>

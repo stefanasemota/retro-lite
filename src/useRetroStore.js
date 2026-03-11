@@ -56,7 +56,7 @@ export function useRetroStore() {
 
     if (testMode) {
       console.log('%c[Retro-Lite] BDD Test Mode Active', 'background:#4338ca;color:#fff;padding:2px 8px;border-radius:4px');
-      setUser({ uid: 'mock-user-123', email: 'test@example.com', displayName: 'Mock User', isAnonymous: false });
+      setUser({ uid: 'test-admin', email: 'stephan.admin@lst.de', displayName: 'Stephan Admin', isAnonymous: false });
       setLoading(false);
       return;
     }
