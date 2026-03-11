@@ -25,8 +25,7 @@ export default function App() {
     store.clearError();
     try {
       await store.createSession(sessionName);
-      setShowNameModal(false);
-    } catch (err) {
+    } catch {
       // Error handled by store
     } finally {
       setIsCreating(false);
