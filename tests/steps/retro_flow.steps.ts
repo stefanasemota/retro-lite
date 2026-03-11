@@ -1,63 +1,88 @@
 import { Given, When, Then } from '@cucumber/cucumber';
+import { expect, chromium, Page, Browser } from '@playwright/test';
 
-// Placeholder steps for the BDD flow
+let browser: Browser;
+let page: Page;
 
-Given('I am on the start page in test mode', async () => {
-  console.log('STEP: I am on the start page in test mode');
+Given('I am on the start page in test mode', async function () {
+  browser = await chromium.launch({ headless: true });
+  page = await browser.newPage();
+  // Using localhost:5173 as default Vite port, adding testMode=true
+  await page.goto('http://localhost:5173?testMode=true');
 });
 
-When('I create a new session named {string}', async (name) => {
-  console.log(`STEP: I create a new session named ${name}`);
+When('I create a new session named {string}', async function (name: string) {
+  await page.click('[data-testid="host-session-button"]');
+  await page.fill('[data-testid="session-name-input"]', name);
+  await page.click('[data-testid="confirm-create-button"]');
+  // Wait for session to be created (ID appears)
+  await expect(page.locator('text=Live')).toBeVisible();
 });
 
-When('I enter {string} in the category {string}', async (text, category) => {
-  console.log(`STEP: I enter ${text} in ${category}`);
+When('I enter {string} in the category {string}', async function (text: string, category: string) {
+  // Select category if in Phase 1
+  const catBtn = page.locator(`button:has-text("${category}")`);
+  if (await catBtn.isVisible()) {
+    await catBtn.click();
+  }
+  await page.fill('[data-testid="entry-textarea"]', text);
+  await page.click('[data-testid="add-entry-button"]');
 });
 
-When('I reveal the board', async () => {
-  console.log('STEP: I reveal the board');
+When('I reveal the board', async function () {
+  // In our toggleBlur implementation, this is what reveals
+  await page.click('button:has(svg.lucide-eye-off)'); 
 });
 
-When('I vote for the card {string}', async (text) => {
-  console.log(`STEP: I vote for ${text}`);
+When('I vote for the card {string}', async function (text: string) {
+  const card = page.locator(`[data-testid="entry-text"]:has-text("${text}")`).locator('..');
+  await card.locator('[data-testid="vote-button"]').click();
 });
 
-When('I identify the winner and start {string}', async (action) => {
-  console.log(`STEP: I identify the winner and start ${action}`);
+When('I identify the winner and start {string}', async function (action: string) {
+  await page.click(`[data-testid="drill-button"]:has-text("${action}")`);
 });
 
-Then('the sidebar should show the anchor {string}', async (text) => {
-  console.log(`STEP: the sidebar should show the anchor ${text}`);
+Then('the sidebar should show the anchor {string}', async function (text: string) {
+  const sidebarText = page.locator('[data-testid="sidebar-step-text"]').first();
+  await expect(sidebarText).toContainText(text);
 });
 
-When('I enter the cause {string}', async (cause) => {
-  console.log(`STEP: I enter the cause ${cause}`);
+When('I enter the cause {string}', async function (cause: string) {
+  await page.fill('[data-testid="entry-textarea"]', cause);
+  await page.click('[data-testid="add-entry-button"]');
 });
 
-When('I vote for the cause {string}', async (cause) => {
-  console.log(`STEP: I vote for the cause ${cause}`);
+When('I vote for the cause {string}', async function (cause: string) {
+  const card = page.locator(`[data-testid="entry-text"]:has-text("${cause}")`).locator('..');
+  await card.locator('[data-testid="vote-button"]').click();
 });
 
-When('I identifying the cause winner and start {string}', async (action) => {
-  console.log(`STEP: I identify the cause winner and start ${action}`);
+When('I identifying the cause winner and start {string}', async function (action: string) {
+  await page.click(`[data-testid="drill-button"]:has-text("${action}")`);
 });
 
-Then('the sidebar should show anchor and cause {string}', async (cause) => {
-  console.log(`STEP: the sidebar should show anchor and cause ${cause}`);
+Then('the sidebar should show anchor and cause {string}', async function (cause: string) {
+  const steps = page.locator('[data-testid="sidebar-step-text"]');
+  await expect(steps.nth(1)).toContainText(cause);
 });
 
-When('I enter the solution {string}', async (solution) => {
-  console.log(`STEP: I enter the solution ${solution}`);
+When('I enter the solution {string}', async function (solution: string) {
+  await page.fill('[data-testid="entry-textarea"]', solution);
+  await page.click('[data-testid="add-entry-button"]');
 });
 
-When('I vote for the solution {string}', async (solution) => {
-  console.log(`STEP: I vote for the solution ${solution}`);
+When('I vote for the solution {string}', async function (solution: string) {
+  const card = page.locator(`[data-testid="entry-text"]:has-text("${solution}")`).locator('..');
+  await card.locator('[data-testid="vote-button"]').click();
 });
 
-When('I identify the solution winner and start {string}', async (action) => {
-  console.log(`STEP: I identify the solution winner and start ${action}`);
+When('I identify the solution winner and start {string}', async function (action: string) {
+  await page.click(`[data-testid="drill-button"]:has-text("${action}")`);
 });
 
-Then('the sidebar should show the full context trail ⚓ 🔍 💡', async () => {
-  console.log('STEP: the sidebar should show the full context trail');
+Then('the sidebar should show the full context trail ⚓ 🔍 💡', async function () {
+  const steps = page.locator('[data-testid="sidebar-step"]');
+  await expect(steps).toHaveCount(3);
+  await browser.close();
 });
