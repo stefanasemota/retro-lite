@@ -55,9 +55,17 @@ export function useRetroStore() {
     const testMode = params.get('testMode') === 'true';
 
     if (testMode) {
-      console.log('%c[Retro-Lite] BDD Test Mode Active', 'background:#4338ca;color:#fff;padding:2px 8px;border-radius:4px');
+      const role = params.get('role') || 'admin';
+      const isStephan = role === 'admin';
+      console.log(`%c[Retro-Lite] BDD Test Mode Active: ${role}`, 'background:#4338ca;color:#fff;padding:2px 8px;border-radius:4px');
+      
       setTimeout(() => {
-        setUser({ uid: 'test-admin', email: 'stephan.admin@lst.de', displayName: 'Stephan Admin', isAnonymous: false });
+        setUser({ 
+          uid: isStephan ? 'test-admin' : 'test-participant', 
+          email: isStephan ? 'stephan.admin@lst.de' : 'michael.part@lst.de', 
+          displayName: isStephan ? 'Stephan Admin' : 'Michael Participant', 
+          isAnonymous: !isStephan 
+        });
         setLoading(false);
       }, 0);
       return;

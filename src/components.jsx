@@ -31,10 +31,10 @@ export function EntryCard({ entry, user, session, phase, toggleVote, isWinner, o
 
       <div className="flex justify-between items-start gap-3">
         <p data-testid="entry-text" className="text-slate-700 text-[15px] leading-relaxed font-semibold flex-1 pr-2">{entry.text}</p>
-        <button data-testid="vote-button" onClick={() => toggleVote(entry.id, entry.voters)}
+        <button data-testid={`btn-vote-${entry.text}`} onClick={() => toggleVote(entry.id, entry.voters)}
           className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl transition-all active:scale-75 shrink-0 ${hasVoted ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-slate-50 text-slate-300 hover:text-indigo-400'}`}>
           <ThumbsUp className={`w-4 h-4 ${hasVoted ? 'fill-current' : ''}`} />
-          <span data-testid="vote-count" className="text-[10px] font-black tracking-tighter">{entry.votes || 0}</span>
+          <span className="text-[10px] font-black tracking-tighter">{entry.votes || 0}</span>
         </button>
       </div>
 
@@ -110,7 +110,7 @@ export function ContextSidebar({ drillPath, currentPhase }) {
 
   return (
     <aside className="hidden lg:block w-72 shrink-0 sticky top-24 self-start max-h-[calc(100vh-8rem)] overflow-y-auto no-scrollbar py-2">
-      <div className="bg-slate-50/80 backdrop-blur-sm rounded-[2.5rem] border border-slate-100 p-6 shadow-inner">
+      <div data-testid="sidebar-context" className="bg-slate-50/80 backdrop-blur-sm rounded-[2.5rem] border border-slate-100 p-6 shadow-inner">
         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 px-1 flex items-center gap-2">
           <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse" />
           Der Rote Faden

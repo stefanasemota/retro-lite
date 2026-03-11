@@ -83,7 +83,7 @@ export default function App() {
               <button onClick={() => setShowNameModal(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5"/></button>
             </div>
             <input data-testid="session-name-input" autoFocus placeholder="z.B. Sprint 42" className="w-full px-5 py-4 bg-slate-50 rounded-2xl font-semibold border-none outline-none focus:ring-4 focus:ring-indigo-100" value={sessionName} onChange={e => setSessionName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleCreateSession()} />
-            <button data-testid="confirm-create-button" onClick={handleCreateSession} disabled={isCreating || !sessionName.trim()} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 disabled:opacity-50 hover:bg-indigo-700 transition-all">
+            <button data-testid="btn-create-session" onClick={handleCreateSession} disabled={isCreating || !sessionName.trim()} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 disabled:opacity-50 hover:bg-indigo-700 transition-all">
               {isCreating ? 'Erstelle Session…' : <><Plus className="w-5 h-5"/> Session starten</>}
             </button>
           </div>
@@ -100,7 +100,7 @@ export default function App() {
           }`}><ClipboardList className="w-5 h-5"/></div>
           <div>
             <h1 className="font-black text-lg tracking-tight leading-none">{store.session?.sessionName ?? 'Retro-Lite'}</h1>
-            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+            <p data-testid="phase-header" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
               {phase.icon} {phase.label} {inDrill && !store.isHost && <span className="ml-1 opacity-60">· Follow-the-Leader</span>}
             </p>
           </div>
@@ -131,8 +131,8 @@ export default function App() {
               <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-white space-y-4">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Session beitreten</label>
                 <div className="flex gap-2">
-                  <input id="join-input" data-testid="join-input" type="text" placeholder="CODE" className="flex-1 px-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 uppercase font-mono text-center text-2xl tracking-[0.3em]"/>
-                  <button data-testid="join-button" onClick={() => store.joinSession(document.getElementById('join-input').value)} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 active:scale-95 transition-all">GO</button>
+                  <input id="join-input" data-testid="join-code-input" type="text" placeholder="CODE" className="flex-1 px-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 uppercase font-mono text-center text-2xl tracking-[0.3em]"/>
+                  <button data-testid="btn-join-session" onClick={() => store.joinSession(document.getElementById('join-input').value)} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 active:scale-95 transition-all">GO</button>
                 </div>
               </div>
               <div className="relative py-2"><div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200"/></div><div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest text-slate-400"><span className="bg-slate-50 px-4">Scrum Master Area</span></div></div>
@@ -164,8 +164,8 @@ export default function App() {
               {/* Control Bar */}
               <div className="flex justify-between items-center bg-white/80 p-3.5 rounded-3xl border border-slate-100 shadow-sm">
                 <div className="flex items-center gap-2.5">
-                  <div className="bg-indigo-600 text-white px-3.5 py-1.5 rounded-full font-mono font-black tracking-widest text-sm shadow-md">{store.sessionId}</div>
-                  {store.isHost && <button onClick={store.toggleBlur} className={`p-2.5 rounded-full transition-all ${store.session.isBlurred ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>{store.session.isBlurred ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}</button>}
+                  <div data-testid="session-code-display" className="bg-indigo-600 text-white px-3.5 py-1.5 rounded-full font-mono font-black tracking-widest text-sm shadow-md">{store.sessionId}</div>
+                  {store.isHost && <button data-testid="btn-toggle-blur" onClick={store.toggleBlur} className={`p-2.5 rounded-full transition-all ${store.session.isBlurred ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>{store.session.isBlurred ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}</button>}
                   {inDrill && !store.isHost && <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${phase.pill}`}>Moderiert</span>}
                 </div>
                 {store.isHost && <button onClick={exportCSV} className="text-slate-400 hover:text-indigo-600 p-2 bg-slate-50 rounded-xl"><Download className="w-4 h-4"/></button>}
@@ -181,13 +181,13 @@ export default function App() {
                 {store.currentPhase === 1 && (
                   <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                     {CATEGORIES.map(cat => (
-                      <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-black border-2 transition-all ${activeCategory === cat.id ? `${cat.color} border-current` : 'bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100'}`}>{cat.icon} {cat.label}</button>
+                      <button key={cat.id} data-testid={`btn-category-${cat.id}`} onClick={() => setActiveCategory(cat.id)} className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-black border-2 transition-all ${activeCategory === cat.id ? `${cat.color} border-current` : 'bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100'}`}>{cat.icon} {cat.label}</button>
                     ))}
                   </div>
                 )}
                 <div className="relative">
-                  <textarea data-testid="entry-textarea" placeholder={store.currentPhase === 1 ? `Teile deine Gedanken zu "${activeCategory}"…` : `${phase.label}: Deine Antwort…`} className="w-full bg-slate-50 p-4 rounded-3xl text-sm min-h-[100px] focus:ring-4 focus:ring-indigo-100 border-none outline-none resize-none font-medium leading-relaxed" value={newEntry} onChange={e => setNewEntry(e.target.value)} />
-                  <button data-testid="add-entry-button" onClick={handleAddEntry} disabled={!newEntry.trim()} className="absolute bottom-3 right-3 bg-indigo-600 text-white p-3 rounded-2xl shadow-xl disabled:opacity-30 hover:bg-indigo-700 active:scale-90 transition-all"><Send className="w-4 h-4"/></button>
+                  <textarea data-testid="entry-input" placeholder={store.currentPhase === 1 ? `Teile deine Gedanken zu "${activeCategory}"…` : `${phase.label}: Deine Antwort…`} className="w-full bg-slate-50 p-4 rounded-3xl text-sm min-h-[100px] focus:ring-4 focus:ring-indigo-100 border-none outline-none resize-none font-medium leading-relaxed" value={newEntry} onChange={e => setNewEntry(e.target.value)} />
+                  <button data-testid="btn-submit-entry" onClick={handleAddEntry} disabled={!newEntry.trim()} className="absolute bottom-3 right-3 bg-indigo-600 text-white p-3 rounded-2xl shadow-xl disabled:opacity-30 hover:bg-indigo-700 active:scale-90 transition-all"><Send className="w-4 h-4"/></button>
                 </div>
               </div>
 
