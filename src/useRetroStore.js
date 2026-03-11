@@ -89,6 +89,7 @@ export function useRetroStore() {
           });
         } finally {
           setLoading(false);
+          console.log('[STORE] BDD Test Init complete, loading off');
         }
       };
       initTest();
@@ -109,11 +110,11 @@ export function useRetroStore() {
   // Real-time Listeners
   useEffect(() => {
     if (!user || !sessionId) return;
+    
     const unsubSession = onSnapshot(sessionRef(sessionId), snap => {
       if (snap.exists()) {
         setSession(snap.data());
       } else { 
-        // Only clear if we're not in the middle of a creation/transition (simple safeguard)
         setSessionId(''); 
         setSession(null); 
       }
@@ -123,10 +124,12 @@ export function useRetroStore() {
     });
 
     const unsubEntries = onSnapshot(entriesRef(sessionId), snap => {
-      setAllEntries(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setAllEntries(docs);
     }, () => setError('Fehler beim Laden der Einträge.'));
 
     return () => { 
+      console.log('[STORE] Stopping listeners for:', sessionId);
       unsubSession(); 
       unsubEntries(); 
     };
@@ -200,7 +203,8 @@ export function useRetroStore() {
   const leaveSession = () => setSessionId('');
 
   const addEntry = async (text, category) => {
-    if (!text.trim() || !user) return;
+    if (!text.trim() || !user || !sessionId) return;
+
     try {
       await addDoc(entriesRef(sessionId), {
         text:      text.trim(),
@@ -212,7 +216,10 @@ export function useRetroStore() {
         parentId:  focusId,
         phase:     currentPhase,
       });
-    } catch (err) { setError(`Fehler beim Hinzufügen: ${err.message}`); }
+    } catch (err) { 
+      console.error('[STORE] addDoc failed:', err);
+      setError(`Fehler beim Hinzufügen: ${err.message}`); 
+    }
   };
 
   const toggleVote = async (entryId, voters = []) => {
@@ -223,12 +230,21 @@ export function useRetroStore() {
         votes:  increment(hasVoted ? -1 : 1),
         voters: hasVoted ? arrayRemove(user.uid) : arrayUnion(user.uid),
       });
-    } catch { setError('Fehler beim Abstimmen.'); }
+    } catch (err) { 
+      console.error('[STORE] toggleVote failed:', err);
+      setError('Fehler beim Abstimmen.'); 
+    }
   };
 
   const toggleBlur = async () => {
     if (!isHost) return;
-    await updateDoc(sessionRef(sessionId), { isBlurred: !session.isBlurred });
+    const nextBlur = !session.isBlurred;
+    try {
+      await updateDoc(sessionRef(sessionId), { isBlurred: nextBlur });
+    } catch (err) { 
+      console.error('[STORE] toggleBlur failed:', err);
+      setError('Fehler beim Ändern des Blurs.'); 
+    }
   };
 
   const setDrillPhase = async (nextPhase, newFocusId, newPath) => {
@@ -254,7 +270,10 @@ export function useRetroStore() {
       }
 
       await updateDoc(sessionRef(sessionId), updates);
-    } catch (err) { setError(`Sync-Fehler: ${err.message}`); }
+    } catch (err) { 
+      console.error('[STORE] setDrillPhase failed:', err);
+      setError(`Sync-Fehler: ${err.message}`); 
+    }
   };
 
   const setManualPhase = async (phaseNum) => {

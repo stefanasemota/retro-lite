@@ -22,7 +22,7 @@ export function EntryCard({ entry, user, session, phase, toggleVote, isWinner, o
   const hasVoted  = entry.voters?.includes(user?.uid);
 
   return (
-    <div className={`relative p-5 rounded-[1.75rem] border border-white shadow-sm bg-white hover:shadow-md transition-all overflow-hidden ${isBlurred ? 'blur-md select-none opacity-40' : ''}`}>
+    <div data-testid="retro-card" className={`relative p-5 rounded-[1.75rem] border border-white shadow-sm bg-white hover:shadow-md transition-all overflow-hidden ${isBlurred ? 'blur-md select-none opacity-40' : ''}`}>
       {isWinner && (
         <div data-testid="winner-trophy" className="absolute -top-1 -right-1 p-1.5 bg-amber-400 text-white rounded-bl-2xl shadow-sm">
           <Trophy className="w-3.5 h-3.5" />

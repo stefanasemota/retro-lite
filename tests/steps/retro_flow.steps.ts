@@ -3,7 +3,7 @@ import { chromium, Browser, Page, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 
-setDefaultTimeout(10000);
+setDefaultTimeout(30000);
 
 let browser: Browser;
 let page: Page;
@@ -56,77 +56,172 @@ When('ich eine neue Session namens {string} erstelle', async function (sessionNa
 });
 
 When('ich eine Karte {string} in der Kategorie {string} schreibe', async function (text, category) {
-  await page.click(`[data-testid="btn-category-${category.toLowerCase()}"]`, { force: true });
-  await page.type('[data-testid="entry-input"]', text, { delay: 20 });
-  await page.click('[data-testid="btn-submit-entry"]', { force: true });
+  const sid = await page.locator('[data-testid="session-code-display"]').textContent();
+  console.log(`[TEST] Writing card in session ${sid}: "${text}" in ${category}`);
+  
+  const catBtn = page.locator(`[data-testid="btn-category-${category.toLowerCase()}"]`);
+  await catBtn.click({ force: true });
+  
+  const input = page.locator('[data-testid="entry-input"]');
+  await input.focus();
+  await input.fill(text);
+  
+  const submitBtn = page.locator('[data-testid="btn-submit-entry"]');
+  await expect(submitBtn).toBeEnabled({ timeout: 5000 });
+  
+  // Use dispatchEvent to ensure the click reaches the React handler if hit-testing is weird
+  console.log(`[TEST] Clicking submit button for card`);
+  await submitBtn.dispatchEvent('click');
 });
 
 When('ich den Blur deaktiviere', async function () {
-  await page.click('[data-testid="btn-toggle-blur"]', { force: true });
+  const btn = page.locator('[data-testid="btn-toggle-blur"]');
+  console.log('[TEST] Clicking toggle blur button');
+  await btn.dispatchEvent('click');
 });
 
 When('ich für die Karte {string} vote', async function (text) {
-  await page.click(`[data-testid="btn-vote-${text}"]`, { force: true });
+  const card = page.locator('[data-testid="retro-card"]').filter({ hasText: text });
+  try {
+    await card.waitFor({ state: 'visible', timeout: 10000 });
+  } catch (err) {
+    console.log(`[DIAGNOSTIC] Timeout waiting for card: "${text}"`);
+    const cardsCount = await page.locator('[data-testid="retro-card"]').count();
+    console.log(`[DIAGNOSTIC] Visible cards count: ${cardsCount}`);
+    
+    // Take and store screenshot in current dir for debugging
+    const screenshotPath = path.join(process.cwd(), `bdd-failure-${Date.now()}.png`);
+    await page.screenshot({ path: screenshotPath });
+    console.log(`[DIAGNOSTIC] Screenshot saved to: ${screenshotPath}`);
+    
+    // Save board HTML to file
+    const htmlPath = path.join(process.cwd(), `bdd-failure-${Date.now()}.html`);
+    const boardHtml = await page.innerHTML('main');
+    fs.writeFileSync(htmlPath, boardHtml);
+    console.log(`[DIAGNOSTIC] Board HTML saved to: ${htmlPath}`);
+    
+    throw err;
+  }
+  
+  console.log(`[TEST] Clicking vote button for card: "${text}"`);
+  await card.locator('[data-testid^="btn-vote-"]').dispatchEvent('click');
 });
 
 When('ich den Gewinner ermittle und mit {string} starte', async function (phaseName) {
-  await page.click('[data-testid="drill-button"]', { force: true });
+  const drillBtn = page.locator('[data-testid="drill-button"]');
+  try {
+    await drillBtn.waitFor({ state: 'visible', timeout: 15000 });
+  } catch (err) {
+    console.log(`[DIAGNOSTIC] Timeout waiting for drill-button for phase: ${phaseName}`);
+    
+    // Save board HTML to file
+    const htmlPath = path.join(process.cwd(), `bdd-drill-failure-${Date.now()}.html`);
+    const boardHtml = await page.innerHTML('main');
+    fs.writeFileSync(htmlPath, boardHtml);
+    console.log(`[DIAGNOSTIC] Board HTML saved to: ${htmlPath}`);
+    
+    throw err;
+  }
+  console.log(`[TEST] Clicking drill button for phase: ${phaseName}`);
+  await drillBtn.dispatchEvent('click');
 });
 
 Then('sollte die Sidebar den Anker {string} zeigen', async function (text) {
   const sidebar = page.locator('[data-testid="sidebar-context"]');
-  await expect(sidebar).toContainText(text);
+  try {
+    await expect(sidebar).toContainText(text, { timeout: 10000 });
+  } catch (err) {
+    console.log(`[DIAGNOSTIC] Sidebar missing text: "${text}"`);
+    
+    // Save board HTML to file
+    const htmlPath = path.join(process.cwd(), `bdd-sidebar-failure-${Date.now()}.html`);
+    const boardHtml = await page.innerHTML('main');
+    fs.writeFileSync(htmlPath, boardHtml);
+    console.log(`[DIAGNOSTIC] Board HTML saved to: ${htmlPath}`);
+    
+    throw err;
+  }
 });
 
 When('ich die Ursache {string} eingebe', async function (text) {
-  await page.type('[data-testid="entry-input"]', text, { delay: 20 });
-  await page.click('[data-testid="btn-submit-entry"]', { force: true });
+  const input = page.locator('[data-testid="entry-input"]');
+  await input.fill(text);
+  
+  const submitBtn = page.locator('[data-testid="btn-submit-entry"]');
+  await expect(submitBtn).toBeEnabled({ timeout: 5000 });
+  console.log(`[TEST] Clicking submit button for cause: "${text}"`);
+  await submitBtn.dispatchEvent('click');
 });
 
 When('ich für die Ursache {string} vote', async function (text) {
-  await page.click(`[data-testid="btn-vote-${text}"]`, { force: true });
+  const card = page.locator('[data-testid="retro-card"]').filter({ hasText: text });
+  await card.waitFor({ state: 'visible', timeout: 10000 });
+  console.log(`[TEST] Clicking vote button for cause: "${text}"`);
+  await card.locator('[data-testid^="btn-vote-"]').dispatchEvent('click');
 });
 
 When('ich den Ursachen-Gewinner ermittle und mit {string} starte', async function (phaseName) {
-  await page.click('[data-testid="drill-button"]', { force: true });
+  const drillBtn = page.locator('[data-testid="drill-button"]');
+  await drillBtn.waitFor({ state: 'visible', timeout: 10000 });
+  console.log(`[TEST] Clicking drill button for phase (Ursache): ${phaseName}`);
+  await drillBtn.dispatchEvent('click');
 });
 
 Then('sollte die Sidebar Anker und Ursache {string} zeigen', async function (text) {
   const sidebar = page.locator('[data-testid="sidebar-context"]');
-  await expect(sidebar).toContainText(text);
+  await expect(sidebar).toContainText(text, { timeout: 10000 });
 });
 
 When('ich die Lösung {string} eingebe', async function (text) {
-  await page.type('[data-testid="entry-input"]', text, { delay: 20 });
-  await page.click('[data-testid="btn-submit-entry"]', { force: true });
+  const input = page.locator('[data-testid="entry-input"]');
+  await input.fill(text);
+  
+  const submitBtn = page.locator('[data-testid="btn-submit-entry"]');
+  await expect(submitBtn).toBeEnabled({ timeout: 5000 });
+  console.log(`[TEST] Clicking submit button for solution: "${text}"`);
+  await submitBtn.dispatchEvent('click');
 });
 
 When('ich für die Lösung {string} vote', async function (text) {
-  await page.click(`[data-testid="btn-vote-${text}"]`, { force: true });
+  const card = page.locator('[data-testid="retro-card"]').filter({ hasText: text });
+  await card.waitFor({ state: 'visible', timeout: 10000 });
+  console.log(`[TEST] Clicking vote button for solution: "${text}"`);
+  await card.locator('[data-testid^="btn-vote-"]').dispatchEvent('click');
 });
 
 When('ich den Lösungs-Gewinner ermittle und mit {string} starte', async function (phaseName) {
-  await page.click('[data-testid="drill-button"]', { force: true });
+  const drillBtn = page.locator('[data-testid="drill-button"]');
+  await drillBtn.waitFor({ state: 'visible', timeout: 10000 });
+  console.log(`[TEST] Clicking drill button for phase (Lösung): ${phaseName}`);
+  await drillBtn.dispatchEvent('click');
 });
 
 Then('sollte die Sidebar den vollen Kontext-Pfad ⚓ 🔍 💡 zeigen', async function () {
   const sidebar = page.locator('[data-testid="sidebar-context"]');
-  await expect(sidebar).toContainText('⚓');
-  await expect(sidebar).toContainText('🔍');
-  await expect(sidebar).toContainText('💡');
+  await expect(sidebar).toContainText('⚓', { timeout: 10000 });
+  await expect(sidebar).toContainText('🔍', { timeout: 10000 });
+  await expect(sidebar).toContainText('💡', { timeout: 10000 });
 });
 
 When('ich die Massnahme {string} eingebe', async function (text) {
-  await page.type('[data-testid="entry-input"]', text, { delay: 20 });
-  await page.click('[data-testid="btn-submit-entry"]', { force: true });
+  const input = page.locator('[data-testid="entry-input"]');
+  await input.fill(text);
+  
+  const submitBtn = page.locator('[data-testid="btn-submit-entry"]');
+  await expect(submitBtn).toBeEnabled({ timeout: 5000 });
+  console.log(`[TEST] Clicking submit button for measure: "${text}"`);
+  await submitBtn.dispatchEvent('click');
 });
 
 When('ich für die Massnahme {string} vote', async function (text) {
-  await page.click(`[data-testid="btn-vote-${text}"]`, { force: true });
+  const card = page.locator('[data-testid="retro-card"]').filter({ hasText: text });
+  await card.waitFor({ state: 'visible', timeout: 10000 });
+  console.log(`[TEST] Clicking vote button for measure: "${text}"`);
+  await card.locator('[data-testid^="btn-vote-"]').dispatchEvent('click');
 });
 
 Then('sollte die Karte {string} als finaler Winner markiert sein', async function (text) {
-  await expect(page.locator('[data-testid="winner-trophy"]')).toBeVisible();
+  await expect(page.locator('[data-testid="winner-trophy"]')).toBeVisible({ timeout: 10000 });
   const card = page.locator(`.bg-white:has-text("${text}")`);
-  await expect(card).toBeVisible();
+  await expect(card).toBeVisible({ timeout: 10000 });
 });

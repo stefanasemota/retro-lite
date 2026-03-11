@@ -15,6 +15,7 @@ We combine **Pure Logic Unit Testing** with **Behavior-Driven Development (BDD)*
 - **Cucumber**: Gherkin-based scenario definitions.
 - **Playwright**: Browser automation for end-to-end flows.
 - **Vite Plugin**: Seamless integration of Cucumber steps into the Vitest pipeline.
+- **npm run test:bdd**
 
 ---
 

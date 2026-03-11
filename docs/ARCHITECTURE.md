@@ -41,3 +41,6 @@ Admins (Hosts) have specialized UI to:
 - **Responsive Flex-Layout**: Horizontal on Desktop, Vertical on Mobile.
 - **Glassmorphism**: Use of `backdrop-blur` and `bg-white/80` for a modern aesthetic.
 - **Compact Sidebar**: Permanent orientation through the Context Sidebar.
+
+## To-Do: Zustandsverwaltung & Skalierung
+Aktuell basiert die App auf einem modularen Custom Hook (useRetroStore.js). Für die weitere Entwicklung ist die Migration auf die Zustand-Bibliothek geplant. Ziel ist es, die Zustandsverwaltung von der UI-Logik zu entkoppeln, um komplexe Navigations-Features wie den Admin Control Tower und die Drill-Down-Historie wartungsfreundlicher abzubilden und die Performance durch selektives Rendering zu optimieren.
