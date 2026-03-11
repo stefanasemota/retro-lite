@@ -51,6 +51,16 @@ export function useRetroStore() {
 
   // Auth Init
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const testMode = params.get('testMode') === 'true';
+
+    if (testMode) {
+      console.log('%c[Retro-Lite] BDD Test Mode Active', 'background:#4338ca;color:#fff;padding:2px 8px;border-radius:4px');
+      setUser({ uid: 'mock-user-123', email: 'test@example.com', displayName: 'Mock User', isAnonymous: false });
+      setLoading(false);
+      return;
+    }
+
     const init = async () => {
       try {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token)
