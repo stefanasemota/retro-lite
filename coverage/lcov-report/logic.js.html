@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.9% </span>
+                <span class="strong">90.69% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>20/22</span>
+                <span class='fraction'>39/43</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">71.42% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/7</span>
+                <span class='fraction'>6/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.5% </span>
+                <span class="strong">86.36% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>14/16</span>
+                <span class='fraction'>19/22</span>
             </div>
         
             
@@ -135,8 +135,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -144,7 +143,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -152,20 +151,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -173,7 +173,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -198,9 +198,9 @@ export const PHASE_CONFIG = {
 /**
  * filterEntries - Pure function to filter entries based on parentId.
  */
-export function <span class="fstat-no" title="function not covered" >filterEntries(</span>allEntries, focusId) {
-<span class="cstat-no" title="statement not covered" >  return allEntries.filter(<span class="fstat-no" title="function not covered" >e </span>=&gt;</span>
-<span class="cstat-no" title="statement not covered" >    focusId === null ? e.parentId === null : e.parentId === focusId</span>
+export function <span class="fstat-no" title="function not covered" >filterEntries(</span>allEntries, focusId) <span class="cstat-no" title="statement not covered" >{</span>
+<span class="cstat-no" title="statement not covered" >  return allEntries.filter(<span class="fstat-no" title="function not covered" >e =&gt;</span></span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >    focusId === n</span>ull ? e.parentId === null : e.parentId === focusId</span>
   );
 }
 &nbsp;
@@ -210,9 +210,9 @@ export function <span class="fstat-no" title="function not covered" >filterEntri
 export function getWinner(entries) {
   if (!entries || !entries.length) return null;
   const sorted = [...entries].sort((a, b) =&gt; {
-    const voteDiff = (b.votes ?? <span class="branch-1 cbranch-no" title="branch not covered" >0)</span> - (a.votes ?? <span class="branch-1 cbranch-no" title="branch not covered" >0)</span>;
+    const voteDiff = (b.<span class="branch-1 cbranch-no" title="branch not covered" >votes ?? 0)</span> - (a.<span class="branch-1 cbranch-no" title="branch not covered" >votes ?? 0)</span>;
     if (voteDiff !== 0) return voteDiff;
-    return (a.timestamp?.seconds ?? <span class="branch-1 cbranch-no" title="branch not covered" >0)</span> - (b.timestamp?.seconds ?? <span class="branch-1 cbranch-no" title="branch not covered" >0)</span>;
+    return (a.timestamp?.<span class="branch-1 cbranch-no" title="branch not covered" >seconds ?? 0)</span> - (b.timestamp?.<span class="branch-1 cbranch-no" title="branch not covered" >seconds ?? 0)</span>;
   });
   return sorted[0].votes &gt; 0 ? sorted[0] : null;
 }
@@ -221,10 +221,10 @@ export function getWinner(entries) {
  * updateHistory - Adds a new entry to the navigation history, avoiding duplicates.
  */
 export function updateHistory(currentHistory, nextItem) {
-  if (!nextItem || !nextItem.id) return currentHistory || <span class="branch-1 cbranch-no" title="branch not covered" >[];</span>
-  const exists = (currentHistory || <span class="branch-1 cbranch-no" title="branch not covered" >[])</span>.some(h =&gt; h.id === nextItem.id);
+  if (!nextItem || !nextItem.id) return <span class="branch-1 cbranch-no" title="branch not covered" >currentHistory || [];</span>
+  const exists = (<span class="branch-1 cbranch-no" title="branch not covered" >currentHistory || [])</span>.some(h =&gt; h.id === nextItem.id);
   if (exists) return currentHistory;
-  return [...(currentHistory || <span class="branch-1 cbranch-no" title="branch not covered" >[])</span>, nextItem];
+  return [...(<span class="branch-1 cbranch-no" title="branch not covered" >currentHistory || [])</span>, nextItem];
 }
 &nbsp;
 /**
@@ -241,7 +241,7 @@ export function calculateCurrentPhase(drillPath) {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-11T20:08:58.034Z
+                at 2026-03-11T20:15:19.951Z
             </div>
         <script src="prettify.js"></script>
         <script>

@@ -26,7 +26,7 @@ After(async function (scenario) {
 });
 
 Given('ich bin auf der Startseite im Test-Modus', async function () {
-  await page.goto('http://localhost:9002?testMode=true&role=admin');
+  await page.goto('http://localhost:9003?testMode=true&role=admin');
 });
 
 When('ich eine neue Session namens {string} erstelle', async function (sessionName) {
