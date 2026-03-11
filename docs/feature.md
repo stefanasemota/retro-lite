@@ -1,53 +1,88 @@
-Feature-Dokumentation: LST Retro-Lite
+# 🚀 Feature-Dokumentation: LST Retro-Lite
 
-Die App wurde speziell für den Einsatz in agilen Teams (wie bei LST) entwickelt, um Reibungsverluste bei Retrospektiven zu minimieren.
+![Build Info](https://img.shields.io/badge/Stack-React--Vite--Firebase-orange?style=for-the-badge)
+![UI Design](https://img.shields.io/badge/Design-Boutique--UX-navy?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Optimized-success?style=for-the-badge)
 
-1. Das "4 Ls" Framework
+Die **Retro-Lite-v2** App wurde speziell für den Einsatz in agilen Teams entwickelt, um Reibungsverluste bei Retrospektiven zu minimieren und kognitive Last zu reduzieren.
 
-Anstelle von simplen "Gut/Schlecht"-Listen nutzt die App das psychologisch fundierte 4 Ls Framework:
+---
 
-Liked: Was lief gut?
+## 📋 Table of Contents
+- [1. Das "4 Ls" Framework](#1-das-4-ls-framework)
+- [2. Dual-Access System (Admin vs. Participant)](#2-dual-access-system-admin-vs-participant)
+- [3. Anti-Bias "Blur" Feature](#3-anti-bias-blur-feature)
+- [4. Demokratisches Voting & Winner-Logic](#4-demokratisches-voting--winner-logic)
+- [5. Echtzeit-Synchronisation](#5-echtzeit-synchronisation)
+- [6. Data Portability (CSV Export)](#6-data-portability-csv-export)
+- [7. Boutique UI/UX Principles](#7-boutique-uiux-principles)
 
-Learned: Was haben wir gelernt (Tech/Prozess)?
+---
 
-Lacked: Was hat uns gefehlt?
+## 1. Das "4 Ls" Framework
 
-Longed For: Was wünschen wir uns für die Zukunft?
+Anstelle von simplen "Gut/Schlecht"-Listen nutzt die App das psychologisch fundierte **4 Ls Framework**, um eine tiefere Perspektive auf den Sprint zu ermöglichen:
 
-Implementierung: Schneller Kategoriewechsel über eine mobile Tab-Bar.
+- **Liked**: Was lief besonders gut und hat uns Freude bereitet?
+- **Learned**: Welche neuen Erkenntnisse (Tech/Prozess) haben wir gewonnen?
+- **Lacked**: Was hat uns während der Arbeit gefehlt oder blockiert?
+- **Longed For**: Was wünschen wir uns für die Zukunft (Wünsche/Visionen)?
 
-2. Dual-Access System (Admin vs. Participant)
+> [!TIP]
+> Die App ermöglicht einen schnellen Kategoriewechsel über eine mobile-optimierte Tab-Bar, um Gedankenflüsse nicht zu unterbrechen.
 
-Admin (Du): Loggt sich sicher via Google ein. Nur du kannst neue Sessions erstellen, den "Blur"-Modus steuern und Daten exportieren.
+---
 
-Teilnehmer (Das Team): Maximale Hürdenfreiheit. Sie geben einfach den 6-stelligen Code ein und sind anonym dabei (Firebase Anonymous Auth). Das fördert die Ehrlichkeit.
+## 2. Dual-Access System (Admin vs. Participant)
 
-3. Anti-Bias "Blur" Feature (Geeky Option)
+| Rolle | Zugang | Privilegien |
+| :--- | :--- | :--- |
+| **Admin (Host)** | Sicherer Google Auth | Erstellt Sessions, steuert den Workflow (Blur/Phasen), generiert Exports. |
+| **Teilnehmer** | 6-stelliger Code | Anonyme Teilnahme via Firebase Anonymous Auth. Maximale Ehrlichkeit ohne Login-Hürden. |
 
-Problem: "Group Think" – Leute schreiben das, was andere schon geschrieben haben.
+---
 
-Lösung: Du kannst als Admin das Board "unscharf" (blur) schalten. Jeder sieht nur seine eigenen Karten klar, die anderen sind verpixelt, bis du die Diskussion eröffnest.
+## 3. Anti-Bias "Blur" Feature
 
-4. Demokratisches Voting & Trophy-System
+> [!IMPORTANT]
+> **Das Problem**: "Group Think" – Teammitglieder orientieren sich unbewusst an bereits existierenden Karten.
 
-Voting: Jeder Teilnehmer kann Karten upvoten. Die Karten sortieren sich in Echtzeit um – die wichtigsten Themen wandern nach oben.
+**Die Lösung**: Ein Klick des Admins schaltet das Board "unscharf" (Blur). Jeder sieht nur seine eigenen Entwürfe klar. Erst wenn die Diskussion eröffnet wird, deaktiviert der Admin den Blur für alle Teilnehmer synchron.
 
-The Trophy: Die Karte mit den meisten Stimmen in jeder Kategorie bekommt automatisch ein Trophäen-Icon. Das macht die Priorisierung für Michael (PO) visuell sofort erfassbar.
+---
 
-5. Echtzeit-Synchronisation
+## 4. Demokratisches Voting & Winner-Logic
 
-Dank Firebase Firestore (Real-time Listeners) sieht jeder Teilnehmer sofort, wenn eine neue Karte erscheint oder ein Vote abgegeben wird. Es gibt kein "Seite neu laden".
+Die App nutzt einen Echtzeit-Voting-Mechanismus, um die Priorisierung zu objektivieren:
+- **Mathematische Präzision**: Die Trophäe 🏆 erscheint automatisch auf der Karte mit den höchsten Stimmen.
+- **Tie-Breaker**: Bei Punktegleichstand greift die **FIFO-Logik** (First In, First Out) basierend auf dem Zeitstempel der Karte.
 
-6. Data Portability (CSV Export)
+---
 
-Mit einem Klick generiert die App eine CSV-Datei. Diese enthält:
+## 5. Echtzeit-Synchronisation
 
-Kategorie, Text der Karte und Anzahl der Votes.
+Dank **Firebase Firestore** (Real-time Listeners) agiert die App verzögerungsfrei:
+- Keine manuellen Page-Refreshes nötig.
+- Live-Counters für Teilnehmer und Votings.
+- Instant-Updates für den moderator-gesteuerten Drill-Down-Pfad ("Der Rote Faden").
 
-Nutzen: Perfekt für das Sprint-Review-Protokoll oder zum Import in andere Tools (EasyRetro/Excel).
+---
 
-7. Boutique UI/UX
+## 6. Data Portability (CSV Export)
 
-Mobile First: Das Design ist für Smartphones optimiert, da Teams in Retros oft nicht am Laptop sitzen wollen.
+Die Ergebnisse einer Retro müssen operativ nutzbar sein. Mit einem Klick generiert der Admin eine CSV-Datei:
+- **Inhalt**: Kategorie, Karten-Text, Voting-Score und (falls vorhanden) die hierarchische Verknüpfung zur Ursache.
+- **Nutzen**: Perfekt für Sprint-Review-Protokolle, Jira-Integrationen oder Excel-Follow-ups.
 
-Design-Tokens: Abgerundete Formen (rounded-[2rem]), Indigo-Farbschema und Tailwind-Animationen für ein modernes "App-Gefühl".
+---
+
+## 7. Boutique UI/UX Principles
+
+Die App folgt einem **Boutique-Ansatz**: Weniger ist mehr, aber das, was da ist, muss sich premium anfühlen.
+- **Mobile-First**: Optimiert für die Nutzung am Smartphone während man im Teamraum steht.
+- **Modern Stack**: Tailwind CSS mit Custom-Animationen, Lucide Icons und abgerundeten "Pill"-Designs (`rounded-[2rem]`) für ein freundliches, modernes Interface.
+
+---
+
+> [!NOTE]
+> Diese Dokumentation dient als Referenz für alle Stakeholder und wird bei jedem Feature-Update (z.B. neue Analyse-Tools) ergänzt.
