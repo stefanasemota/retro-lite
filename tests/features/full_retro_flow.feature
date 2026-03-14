@@ -23,3 +23,13 @@ Funktionalität: Vollständiger Retro Flow
     Wenn ich die Massnahme "Checkliste aktualisieren" eingebe
     Und ich für die Massnahme "Checkliste aktualisieren" vote
     Dann sollte die Karte "Checkliste aktualisieren" als finaler Winner markiert sein
+
+  Szenario: Mehrere Kategorie-Gewinner zeigen Drill-Down Buttons
+    Gegeben sei ich bin auf der Startseite im Test-Modus
+    Wenn ich eine neue Session namens "Multi Winner Session" erstelle
+    Und ich eine Karte "Gutes Teamwork" in der Kategorie "liked" schreibe
+    Und ich eine Karte "Bessere Doku" in der Kategorie "longed" schreibe
+    Und ich den Blur deaktiviere
+    Und ich für die Karte "Gutes Teamwork" vote
+    Und ich für die Karte "Bessere Doku" vote
+    Dann sollten beide Karten "Gutes Teamwork" und "Bessere Doku" einen Drill-Down Button zeigen

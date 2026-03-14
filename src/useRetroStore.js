@@ -45,6 +45,7 @@ export function useRetroStore() {
   const [user, setUser]             = useState(null);
   const [loading, setLoading]       = useState(true);
   const [sessionId, setSessionId]   = useState('');
+  const [view, setView]             = useState('landing'); // 'landing' | 'session'
   const [session, setSession]       = useState(null);
   const [allEntries, setAllEntries] = useState([]);
   const [error, setError]           = useState(null);
@@ -109,7 +110,7 @@ export function useRetroStore() {
 
   // Real-time Listeners
   useEffect(() => {
-    if (!user || !sessionId) return;
+    if (!sessionId || sessionId.trim() === '' || view !== 'session' || !user) return;
     
     const unsubSession = onSnapshot(sessionRef(sessionId), snap => {
       if (snap.exists()) {
@@ -140,6 +141,14 @@ export function useRetroStore() {
   const focusId      = session?.focusId ?? null;
   const drillPath    = session?.drillPath ?? [];
   const isHost       = session?.hostId === user?.uid;
+  const isCompleted  = session?.isCompleted ?? false;
+  
+  // Logic to determine view based on session state
+  useEffect(() => {
+    if (isCompleted && view === 'session') {
+      setView('summary');
+    }
+  }, [isCompleted, view]);
   
   // Math: Filter entries for current view
   const displayEntries = useMemo(() =>
@@ -168,7 +177,10 @@ export function useRetroStore() {
     if (!cleanId) return;
     try {
       const snap = await getDoc(sessionRef(cleanId));
-      if (snap.exists()) setSessionId(cleanId);
+      if (snap.exists()) {
+        setSessionId(cleanId);
+        setView('session');
+      }
       else setError('Session-ID nicht gefunden!');
     } catch { setError('Fehler beim Beitritt.'); }
   };
@@ -194,13 +206,19 @@ export function useRetroStore() {
         navigationHistory: [],
       });
       setSessionId(newId);
+      setView('session');
     } catch (err) {
       console.error(`[STORE] Firestore write FAILED: ${err.message}`);
       throw err;
     }
   };
 
-  const leaveSession = () => setSessionId('');
+  const leaveSession = () => {
+    setSessionId('');
+    setView('landing');
+    setSession(null);
+    setAllEntries([]);
+  };
 
   const addEntry = async (text, category) => {
     if (!text.trim() || !user || !sessionId) return;
@@ -278,7 +296,12 @@ export function useRetroStore() {
 
   const setManualPhase = async (phaseNum) => {
     if (!isHost) return;
-    await updateDoc(sessionRef(sessionId), { currentPhase: phaseNum });
+    const updates = { currentPhase: phaseNum };
+    if (phaseNum === 1) {
+      updates.focusId = null;
+      updates.drillPath = [];
+    }
+    await updateDoc(sessionRef(sessionId), updates);
   };
 
   const jumpToHistory = async (item) => {
@@ -290,17 +313,28 @@ export function useRetroStore() {
     });
   };
 
+  const completeRetro = async () => {
+    if (!isHost) return;
+    try {
+      await updateDoc(sessionRef(sessionId), { isCompleted: true });
+      setView('summary');
+    } catch (err) {
+      console.error('[STORE] completeRetro failed:', err);
+      setError('Fehler beim Abschließen der Retro.');
+    }
+  };
+
   const clearError = () => setError(null);
 
   return {
     // State
     user, loading, error, clearError,
-    sessionId, session, allEntries, displayEntries,
+    sessionId, view, session, allEntries, displayEntries,
     currentPhase, focusId, drillPath, isHost,
     
     // Actions
     loginAdmin, logout, joinSession, createSession, leaveSession,
     addEntry, toggleVote, toggleBlur, setDrillPhase,
-    setManualPhase, jumpToHistory
+    setManualPhase, jumpToHistory, completeRetro
   };
 }

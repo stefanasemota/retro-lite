@@ -39,7 +39,7 @@ Given('ich bin auf der Startseite im Test-Modus', async function () {
 When('ich eine neue Session namens {string} erstelle', async function (sessionName) {
   await page.click('[data-testid="host-session-button"]');
   const input = page.locator('[data-testid="session-name-input"]');
-  await input.waitFor({ state: 'visible', timeout: 5000 });
+  await expect(input).toBeVisible({ timeout: 5000 });
   
   // Clear pre-filled value
   await input.fill('');
@@ -52,7 +52,7 @@ When('ich eine neue Session namens {string} erstelle', async function (sessionNa
   await submitBtn.click();
   
   // Wait for transition to board
-  await page.waitForSelector('[data-testid="entry-input"]', { state: 'visible', timeout: 5000 });
+  await expect(page.locator('[data-testid="entry-input"]')).toBeVisible({ timeout: 5000 });
 });
 
 When('ich eine Karte {string} in der Kategorie {string} schreibe', async function (text, category) {
@@ -83,7 +83,7 @@ When('ich den Blur deaktiviere', async function () {
 When('ich für die Karte {string} vote', async function (text) {
   const card = page.locator('[data-testid="retro-card"]').filter({ hasText: text });
   try {
-    await card.waitFor({ state: 'visible', timeout: 10000 });
+  await expect(card).toBeVisible({ timeout: 10000 });
   } catch (err) {
     console.log(`[DIAGNOSTIC] Timeout waiting for card: "${text}"`);
     const cardsCount = await page.locator('[data-testid="retro-card"]').count();
@@ -110,7 +110,7 @@ When('ich für die Karte {string} vote', async function (text) {
 When('ich den Gewinner ermittle und mit {string} starte', async function (phaseName) {
   const drillBtn = page.locator('[data-testid="drill-button"]');
   try {
-    await drillBtn.waitFor({ state: 'visible', timeout: 15000 });
+  await expect(drillBtn).toBeVisible({ timeout: 15000 });
   } catch (err) {
     console.log(`[DIAGNOSTIC] Timeout waiting for drill-button for phase: ${phaseName}`);
     
@@ -155,14 +155,14 @@ When('ich die Ursache {string} eingebe', async function (text) {
 
 When('ich für die Ursache {string} vote', async function (text) {
   const card = page.locator('[data-testid="retro-card"]').filter({ hasText: text });
-  await card.waitFor({ state: 'visible', timeout: 10000 });
+  await expect(card).toBeVisible({ timeout: 10000 });
   console.log(`[TEST] Clicking vote button for cause: "${text}"`);
   await card.locator('[data-testid^="btn-vote-"]').dispatchEvent('click');
 });
 
 When('ich den Ursachen-Gewinner ermittle und mit {string} starte', async function (phaseName) {
   const drillBtn = page.locator('[data-testid="drill-button"]');
-  await drillBtn.waitFor({ state: 'visible', timeout: 10000 });
+  await expect(drillBtn).toBeVisible({ timeout: 10000 });
   console.log(`[TEST] Clicking drill button for phase (Ursache): ${phaseName}`);
   await drillBtn.dispatchEvent('click');
 });
@@ -191,7 +191,7 @@ When('ich für die Lösung {string} vote', async function (text) {
 
 When('ich den Lösungs-Gewinner ermittle und mit {string} starte', async function (phaseName) {
   const drillBtn = page.locator('[data-testid="drill-button"]');
-  await drillBtn.waitFor({ state: 'visible', timeout: 10000 });
+  await expect(drillBtn).toBeVisible({ timeout: 10000 });
   console.log(`[TEST] Clicking drill button for phase (Lösung): ${phaseName}`);
   await drillBtn.dispatchEvent('click');
 });
@@ -215,7 +215,7 @@ When('ich die Massnahme {string} eingebe', async function (text) {
 
 When('ich für die Massnahme {string} vote', async function (text) {
   const card = page.locator('[data-testid="retro-card"]').filter({ hasText: text });
-  await card.waitFor({ state: 'visible', timeout: 10000 });
+  await expect(card).toBeVisible({ timeout: 10000 });
   console.log(`[TEST] Clicking vote button for measure: "${text}"`);
   await card.locator('[data-testid^="btn-vote-"]').dispatchEvent('click');
 });
@@ -224,4 +224,44 @@ Then('sollte die Karte {string} als finaler Winner markiert sein', async functio
   await expect(page.locator('[data-testid="winner-trophy"]')).toBeVisible({ timeout: 10000 });
   const card = page.locator(`.bg-white:has-text("${text}")`);
   await expect(card).toBeVisible({ timeout: 10000 });
+});
+
+Then('sollten beide Karten {string} und {string} einen Drill-Down Button zeigen', async function (text1, text2) {
+  const card1 = page.locator('[data-testid="retro-card"]').filter({ hasText: text1 });
+  const card2 = page.locator('[data-testid="retro-card"]').filter({ hasText: text2 });
+  
+  await expect(card1.locator('[data-testid="drill-button"]')).toBeVisible({ timeout: 10000 });
+  await expect(card2.locator('[data-testid="drill-button"]')).toBeVisible({ timeout: 10000 });
+});
+
+When('ich zurück zu Phase 1 springe', async function () {
+  await page.click('button:has-text("Zurück zu 4L")');
+});
+
+When('ich im Control Tower den Branch {string} anklicke', async function (text) {
+  const branchBtn = page.locator('button').filter({ hasText: text }).first();
+  await branchBtn.click();
+});
+
+Then('sollte der Context-Header {string} zeigen', async function (expectedText) {
+  // horizontal ContextHeader check
+  const header = page.locator('header');
+  await expect(header).toContainText(expectedText.replace('⚓', '').replace('"', '').trim());
+});
+
+Then('sollte die Karte {string} {int} Stimme zeigen', async function (text, count) {
+  const card = page.locator('[data-testid="retro-card"]').filter({ hasText: text });
+  await expect(card.locator('span:has-text("' + count + '")')).toBeVisible({ timeout: 5000 });
+});
+
+Then('die Karte {string} sollte einen "Drilled" Indikator zeigen', async function (text) {
+  const card = page.locator('[data-testid="retro-card"]').filter({ hasText: text });
+  // Check for the "Drilled" pill
+  await expect(card.locator('span:has-text("Drilled")')).toBeVisible({ timeout: 10000 });
+});
+
+Then('der Context-Header sollte {string} und {string} zeigen', async function (text1, text2) {
+  const header = page.locator('header');
+  await expect(header).toContainText(text1);
+  await expect(header).toContainText(text2.replace('"', '').trim());
 });

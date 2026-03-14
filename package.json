@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run --coverage",
     "dev:test": "vite --port 9003 --strictPort",
-    "test:bdd": "start-server-and-test dev:test http://localhost:9003 \"NODE_OPTIONS='--loader ts-node/esm --no-warnings' cucumber-js tests/features/full_retro_flow.feature --import tests/steps/retro_flow.steps.ts --format progress\"",
+    "test:bdd": "start-server-and-test dev:test http://localhost:9003 \"NODE_OPTIONS='--loader ts-node/esm --no-warnings' cucumber-js tests/features/*.feature --import tests/steps/retro_flow.steps.ts --format progress\"",
     "test:all": "npm test && npm run test:bdd"
   },
   "dependencies": {
