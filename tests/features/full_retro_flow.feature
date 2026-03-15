@@ -33,3 +33,8 @@ Funktionalität: Vollständiger Retro Flow
     Und ich für die Karte "Gutes Teamwork" vote
     Und ich für die Karte "Bessere Doku" vote
     Dann sollten beide Karten "Gutes Teamwork" und "Bessere Doku" einen Drill-Down Button zeigen
+
+  Szenario: Fehlerszenario: Join mit falschem Code
+    Gegeben sei ich bin auf der Startseite im Test-Modus
+    Wenn ich "FALSCH" als Session Code eingebe und beitrete
+    Dann sollte ich eine Fehlermeldung mit "Session-ID nicht gefunden!" sehen

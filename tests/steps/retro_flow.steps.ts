@@ -265,3 +265,17 @@ Then('der Context-Header sollte {string} und {string} zeigen', async function (t
   await expect(header).toContainText(text1);
   await expect(header).toContainText(text2.replace('"', '').trim());
 });
+
+When('ich {string} als Session Code eingebe und beitrete', async function (code) {
+  const joinInput = page.locator('[data-testid="join-code-input"]');
+  await joinInput.fill(code);
+  const joinBtn = page.locator('[data-testid="btn-join-session"]');
+  await joinBtn.click();
+});
+
+Then('sollte ich eine Fehlermeldung mit {string} sehen', async function (errorMsg) {
+  const errorBanner = page.locator('.bg-red-50');
+  await expect(errorBanner).toBeVisible({ timeout: 5000 });
+  await expect(errorBanner).toContainText(errorMsg);
+});
+

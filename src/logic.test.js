@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getCategoryWinners, findRootCategory } from './logic';
+import { getCategoryWinners, findRootCategory, filterEntries, getWinner, updateHistory, calculateCurrentPhase } from './logic';
 
 describe('getCategoryWinners', () => {
   it('returns an empty object for empty entries', () => {
@@ -66,5 +66,107 @@ describe('findRootCategory', () => {
   it('returns own category if it is a root entry', () => {
     const entry = { id: '1', category: 'learned', parentId: null };
     expect(findRootCategory(entry, [entry])).toBe('learned');
+  });
+});
+
+describe('filterEntries', () => {
+  it('filters by focusId when focusId is truthy', () => {
+    const entries = [
+      { id: '1', parentId: null },
+      { id: '2', parentId: 'A' },
+      { id: '3', parentId: 'B' },
+      { id: '4', parentId: 'A' },
+    ];
+    expect(filterEntries(entries, 'A')).toEqual([
+      { id: '2', parentId: 'A' },
+      { id: '4', parentId: 'A' },
+    ]);
+  });
+
+  it('returns entries with no parentId when focusId is falsy', () => {
+    const entries = [
+      { id: '1', parentId: null },
+      { id: '2', parentId: 'A' },
+      { id: '3', parentId: undefined },
+    ];
+    expect(filterEntries(entries, null)).toEqual([
+      { id: '1', parentId: null },
+      { id: '3', parentId: undefined },
+    ]);
+  });
+});
+
+describe('getWinner', () => {
+  it('returns null for empty or null entries', () => {
+    expect(getWinner([])).toBeNull();
+    expect(getWinner(null)).toBeNull();
+  });
+
+  it('returns null if there are no winners (e.g. 0 votes)', () => {
+    const entries = [{ id: '1', category: 'liked', votes: 0 }];
+    expect(getWinner(entries)).toBeNull();
+  });
+
+  it('selects the absolute winner among all categories', () => {
+    const entries = [
+      { id: '1', category: 'liked', votes: 2, timestamp: { seconds: 100 } },
+      { id: '2', category: 'liked', votes: 5, timestamp: { seconds: 110 } },
+      { id: '3', category: 'lacked', votes: 10, timestamp: { seconds: 120 } },
+    ];
+    const winner = getWinner(entries);
+    expect(winner.id).toBe('3');
+  });
+
+  it('breaks ties between different categories using timestamp', () => {
+    const entries = [
+      { id: '1', category: 'liked', votes: 5, timestamp: { seconds: 120 } },
+      { id: '2', category: 'lacked', votes: 5, timestamp: { seconds: 100 } }, // Older wins
+    ];
+    const winner = getWinner(entries);
+    expect(winner.id).toBe('2');
+  });
+});
+
+describe('updateHistory', () => {
+  it('returns currentHistory if nextItem is null or has no id', () => {
+    const hist = [{ id: '1' }];
+    expect(updateHistory(hist, null)).toEqual(hist);
+    expect(updateHistory(hist, { text: 'no id' })).toEqual(hist);
+  });
+
+  it('returns empty array if currentHistory is falsy and nextItem is invalid', () => {
+    expect(updateHistory(null, null)).toEqual([]);
+  });
+
+  it('does not add duplicate items based on id', () => {
+    const hist = [{ id: '1', text: 'A' }];
+    const nextItem = { id: '1', text: 'B', phase: 2 };
+    expect(updateHistory(hist, nextItem)).toEqual(hist);
+  });
+
+  it('adds new items to the history', () => {
+    const hist = [{ id: '1', text: 'A' }];
+    const nextItem = { id: '2', text: 'B' };
+    expect(updateHistory(hist, nextItem)).toEqual([
+      { id: '1', text: 'A' },
+      { id: '2', text: 'B' }
+    ]);
+  });
+});
+
+describe('calculateCurrentPhase', () => {
+  it('returns 1 if drillPath is falsy or empty', () => {
+    expect(calculateCurrentPhase(null)).toBe(1);
+    expect(calculateCurrentPhase([])).toBe(1);
+  });
+
+  it('returns drillPath.length + 1', () => {
+    expect(calculateCurrentPhase([{}])).toBe(2);
+    expect(calculateCurrentPhase([{}, {}])).toBe(3);
+  });
+
+  it('caps at phase 4', () => {
+    expect(calculateCurrentPhase([{}, {}, {}])).toBe(4);
+    expect(calculateCurrentPhase([{}, {}, {}, {}])).toBe(4); // Even if longer
   });
 });

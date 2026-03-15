@@ -1,7 +1,7 @@
 import React from 'react';
-import { ThumbsUp, Trophy, Search, Lightbulb, CheckSquare, ClipboardList, Settings, Activity, History } from 'lucide-react';
+import { ThumbsUp, Trophy, Search, Lightbulb, CheckSquare, ClipboardList, Settings, Activity, History, LayoutList, Clock, User } from 'lucide-react';
 
-import { CATEGORIES, PHASE_CONFIG } from './logic';
+import { CATEGORIES, PHASE_CONFIG, findRootCategory } from './logic';
 
 const ICON_MAP = {
   Search:      <Search className="w-3.5 h-3.5" />,
