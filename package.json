@@ -47,5 +47,13 @@
     "vite-plugin-istanbul": "^8.0.0",
     "vitest": "^4.0.18",
     "vitest-cucumber-plugin": "^0.1.0"
+  },
+  "nyc": {
+    "exclude": [
+      "**/*.test.js",
+      "**/*.test.jsx",
+      "src/setupTests.js",
+      "tests/**"
+    ]
   }
 }

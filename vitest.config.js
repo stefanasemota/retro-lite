@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     istanbul({
       include: 'src/*',
-      exclude: ['node_modules', 'tests/'],
+      exclude: ['node_modules', 'tests/', 'src/**/*.test.js', 'src/**/*.test.jsx', 'src/setupTests.js'],
       extension: ['.js', '.jsx'],
       requireEnv: false, // Instrument always during test runs
     }),
