@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Plus, LogOut, Send, ShieldCheck, ClipboardList, Eye, EyeOff, AlertCircle, ChevronLeft, X, Sparkles } from 'lucide-react';
 import { useRetroStore } from './useRetroStore';
 import { CATEGORIES, getWinner, getCategoryWinners } from './logic';
-import { PHASES, PHASE_THEMES, BoardView, EmptyState, ContextSidebar, AdminControlTower, ContextHeader, GenesisTable } from './components';
+import { PHASES } from './components';
 
 export default function App() {
   const store = useRetroStore();
