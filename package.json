@@ -9,10 +9,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run --coverage",
-    "dev:test": "vite --port 9003 --strictPort",
+    "dev:test": "VITE_COVERAGE=true vite --port 9003 --strictPort",
     "test:bdd": "start-server-and-test dev:test http://localhost:9003 \"NODE_OPTIONS='--loader ts-node/esm --no-warnings' cucumber-js tests/features/*.feature --import tests/steps/retro_flow.steps.ts --format progress\"",
     "test:all": "npm test && npm run test:bdd",
-    "test:coverage": "npm run test:all && nyc report --reporter=text-summary"
+    "test:report": "nyc report --reporter=lcov --report-dir=coverage",
+    "test:coverage": "npm run test:all && npm run test:report"
   },
   "dependencies": {
     "firebase": "^12.10.0",
