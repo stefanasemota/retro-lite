@@ -9,6 +9,7 @@ const ICON_MAP = {
   CheckSquare: <CheckSquare className="w-3.5 h-3.5" />,
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const PHASE_THEMES = {
   1: { color: '#4f46e5', accent: 'bg-indigo-600', text: 'text-indigo-600', bg: 'bg-indigo-50/50', border: 'border-indigo-100', ripple: 'bg-indigo-400/20' },
   2: { color: '#7c3aed', accent: 'bg-violet-600', text: 'text-violet-600', bg: 'bg-violet-50/50', border: 'border-violet-100', ripple: 'bg-violet-400/20' },
@@ -27,6 +28,7 @@ const _PHASES = Object.fromEntries(
 );
 
 // Map to both strings and numbers for safety
+// eslint-disable-next-line react-refresh/only-export-components
 export const PHASES = {
   ..._PHASES,
   1: _PHASES["1"],
@@ -56,7 +58,7 @@ export function ContextHeader({ drillPath, currentPhase, history = [] }) {
     );
   }
 
-  const steps = drillPath.map((step, i) => {
+  const steps = drillPath.map((step) => {
     let icon = '⚓';
     if (step.phase === 2) icon = '🔍';
     if (step.phase === 3) icon = '💡';
@@ -147,7 +149,7 @@ export function EmptyState() {
   );
 }
 
-export function BoardView({ entries, currentPhase, user, session, phase, toggleVote, onDrill, winnerId, categoryWinners }) {
+export function BoardView({ entries, currentPhase, user, session, toggleVote, onDrill, winnerId, categoryWinners }) {
   const history = session?.navigationHistory || [];
 
   if (currentPhase === 1) {

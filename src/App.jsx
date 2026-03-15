@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, LogOut, Download, Send, ShieldCheck, ClipboardList, Eye, EyeOff, AlertCircle, ChevronLeft, X, Sparkles } from 'lucide-react';
+import { Plus, LogOut, Send, ShieldCheck, ClipboardList, Eye, EyeOff, AlertCircle, ChevronLeft, X, Sparkles } from 'lucide-react';
 import { useRetroStore } from './useRetroStore';
 import { CATEGORIES, getWinner, getCategoryWinners } from './logic';
 import { PHASES, PHASE_THEMES, BoardView, EmptyState, ContextSidebar, AdminControlTower, ContextHeader, GenesisTable } from './components';
@@ -56,27 +56,6 @@ export default function App() {
     const newPath = [...store.drillPath, { parentId: entry.id, parentText: entry.text, phase: store.currentPhase }];
     store.setDrillPhase(phase.nextPhase, entry.id, newPath);
     setNewEntry('');
-  };
-
-  const handleDrillBack = () => {
-    if (!store.isHost || store.drillPath.length === 0) return;
-    const newPath   = store.drillPath.slice(0, -1);
-    const prevFocus = newPath.length > 0 ? newPath[newPath.length - 1].parentId : null;
-    const prevPhase = newPath.length > 0 ? newPath[newPath.length - 1].phase    : 1;
-    store.setDrillPhase(prevPhase, prevFocus, newPath);
-    setNewEntry('');
-  };
-
-  const exportCSV = () => {
-    const headers = 'Phase,Category,Text,Votes\n';
-    const rows = store.allEntries.map(e =>
-      `"${PHASES[e.phase ?? 1]?.label}","${e.category}","${e.text?.replace(/"/g, '""')}",${e.votes || 0}`
-    ).join('\n');
-    const a = Object.assign(document.createElement('a'), {
-      href: URL.createObjectURL(new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' })),
-      download: `LST_Retro_${store.sessionId}.csv`,
-    });
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
   };
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -264,7 +243,6 @@ export default function App() {
                     currentPhase={store.currentPhase} 
                     user={store.user} 
                     session={store.session} 
-                    phase={phase} 
                     toggleVote={store.toggleVote} 
                     winnerId={winner?.id} 
                     categoryWinners={categoryWinners}

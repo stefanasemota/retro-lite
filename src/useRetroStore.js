@@ -134,7 +134,7 @@ export function useRetroStore() {
       unsubSession(); 
       unsubEntries(); 
     };
-  }, [user, sessionId]);
+  }, [user, sessionId, view]);
 
   // Derived State
   const currentPhase = session?.currentPhase || calculateCurrentPhase(session?.drillPath);
