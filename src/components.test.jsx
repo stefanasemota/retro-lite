@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { ContextHeader, GenesisTable, EntryCard, EmptyState, BoardView, ContextSidebar, AdminControlTower } from './components';
 
 describe('ContextHeader', () => {
   it('renders null when in Phase 1 without drillPath and history', () => {

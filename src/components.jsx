@@ -1,3 +1,5 @@
+import React from 'react';
+import { ThumbsUp, Trophy, Search, Lightbulb, CheckSquare, ClipboardList, Settings, Activity, History, LayoutList, Clock, User } from 'lucide-react';
 
 import { CATEGORIES, PHASE_CONFIG, findRootCategory } from './logic';
 
