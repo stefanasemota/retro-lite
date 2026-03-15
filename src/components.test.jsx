@@ -110,6 +110,12 @@ describe('BoardView', () => {
     expect(screen.getByText('Liked Entry')).toBeTruthy();
   });
 
+  it('handles Phase 1 rendering when categoryWinners is fully undefined or missing key', () => {
+    // Passes nothing for categoryWinners to cover logic fallback
+    render(<BoardView currentPhase={1} entries={entries} onDrill={vi.fn()} categoryWinners={null} />);
+    expect(screen.getByText('Liked Entry')).toBeTruthy();
+  });
+
   it('renders Phase 2 flat list', () => {
     const onDrill = vi.fn();
     render(<BoardView currentPhase={2} entries={entries} onDrill={onDrill} />);

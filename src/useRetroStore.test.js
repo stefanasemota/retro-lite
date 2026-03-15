@@ -311,4 +311,88 @@ describe('useRetroStore', () => {
     // Should gracefully fail without crashing
     await vi.waitFor(() => expect(result.current.loading).toBe(false));
   });
+
+  it('handles auth popup closed by user gracefully', async () => {
+    const { signInWithPopup } = await import('firebase/auth');
+    signInWithPopup.mockRejectedValueOnce({ code: 'auth/popup-closed-by-user', message: 'closed' });
+    const { result } = renderHook(() => useRetroStore());
+    await act(async () => { await result.current.loginAdmin(); });
+    // Should NOT set an error state because it's a normal cancellation
+    expect(result.current.error).toBeNull();
+  });
+
+  it('throws error when non-admin tries to create a session', async () => {
+    // Current mock user is NOT anonymous, but we can fake it by temporarily changing the auth module behavior 
+    // Wait, the hook sets user internally. Let's just create a session BEFORE user is loaded, or when user is anonymous.
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementationOnce((auth, cb) => {
+      cb({ uid: 'anon', isAnonymous: true });
+      return vi.fn();
+    });
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await expect(result.current.createSession('Test')).rejects.toThrow('Nur Admins können Sessions erstellen.');
+  });
+
+  it('handles lost connection or missing document on snapshot gracefully', async () => {
+    const { onSnapshot } = await import('firebase/firestore');
+    // Mock onNext returning a non-existing doc
+    onSnapshot.mockImplementationOnce((ref, onNext) => {
+      onNext({ exists: () => false }); // Simulates missing doc
+      return vi.fn();
+    });
+    
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.joinSession('123'); });
+    // Should reset sessionId
+    expect(result.current.sessionId).toBe('');
+  });
+
+  it('handles session stream errors dynamically', async () => {
+    const { onSnapshot } = await import('firebase/firestore');
+    // Mock snapshot error callback
+    onSnapshot.mockImplementationOnce((ref, onNext, onError) => {
+      onError(new Error('Network drop'));
+      return vi.fn();
+    });
+    
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.joinSession('123'); });
+    expect(result.current.error).toBe('Verbindung zur Session verloren.');
+  });
+
+  it('handles mock bdd fallback on errors gracefully', async () => {
+    // For coverage of BDD mock fallback (the error branch in testMode=true)
+    Object.defineProperty(window, 'location', {
+      value: { search: '?testMode=true&role=admin' },
+      writable: true
+    });
+    const { signInAnonymously } = await import('firebase/auth');
+    signInAnonymously.mockRejectedValueOnce(new Error('BDD Hook Failed'));
+
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    // It should fallback to mock user
+    expect(result.current.user.uid).toBe('test-admin');
+  });
+
+  it('navigates to summary when session marks as completed', async () => {
+    // Simulate session arriving completed
+    const { onSnapshot } = await import('firebase/firestore');
+    onSnapshot.mockImplementation((ref, onNext) => {
+      if (!ref.includes('entries')) {
+        onNext({ exists: () => true, data: () => ({ id: '123', isCompleted: true }) });
+      } else {
+        onNext({ docs: [] });
+      }
+      return vi.fn();
+    });
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.joinSession('123'); });
+    // Should switch cleanly
+    expect(result.current.view).toBe('summary');
+  });
 });

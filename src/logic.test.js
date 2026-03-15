@@ -46,6 +46,17 @@ describe('getCategoryWinners', () => {
     expect(winners['cat1'].id).toBe('cat1_v2');
     expect(winners['cat2'].id).toBe('cat2_v2');
   });
+
+  it('handles entries with undefined votes and timestamps gracefully', () => {
+    const entries = [
+      { id: 'v1', category: 'liked' }, // undefined votes/timestamp
+      { id: 'v2', category: 'liked', votes: 1 }, // undefined timestamp
+      { id: 'v3', category: 'liked', votes: 1, timestamp: { seconds: 50 } }, // defined
+    ];
+    const winners = getCategoryWinners(entries);
+    // Since v2 has no timestamp (Infinity), v3 wins the tie breaker (50 < Infinity)
+    expect(winners['liked'].id).toBe('v3');
+  });
 });
 
 describe('findRootCategory', () => {
@@ -57,6 +68,14 @@ describe('findRootCategory', () => {
       { id: '1-1-1', category: null, parentId: '1-1' },
     ];
     expect(findRootCategory(allEntries.find(e => e.id === '1-1-1'), allEntries)).toBe('liked');
+  });
+
+  it('falls back to null if no category is found in the chain', () => {
+    const allEntries = [
+      { id: '1', parentId: null }, // no category
+      { id: '1-1', parentId: '1' }
+    ];
+    expect(findRootCategory(allEntries[1], allEntries)).toBeNull();
   });
 
   it('returns null if entry is null', () => {
@@ -115,6 +134,16 @@ describe('getWinner', () => {
     ];
     const winner = getWinner(entries);
     expect(winner.id).toBe('3');
+  });
+
+  it('handles entries with undefined votes and timestamps seamlessly', () => {
+    const entries = [
+      { id: '1', category: 'liked' }, // no votes, no timestamp
+      { id: '2', category: 'liked', votes: 1 }, 
+    ];
+    const winner = getWinner(entries);
+    // Should fall back to 0 votes, so 1 vote wins
+    expect(winner.id).toBe('2');
   });
 
   it('breaks ties between different categories using timestamp', () => {
