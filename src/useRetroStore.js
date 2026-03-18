@@ -110,7 +110,7 @@ export function useRetroStore() {
 
   // Real-time Listeners
   useEffect(() => {
-    if (!sessionId || sessionId.trim() === '' || view !== 'session' || !user) return;
+    if (!sessionId || sessionId.trim() === '' || view === 'landing' || !user) return;
     
     const unsubSession = onSnapshot(sessionRef(sessionId), snap => {
       if (snap.exists()) {
@@ -204,6 +204,7 @@ export function useRetroStore() {
         focusId:      null,
         drillPath:    [],
         navigationHistory: [],
+        sessionActionItems: [],
       });
       setSessionId(newId);
       setView('session');
@@ -324,6 +325,21 @@ export function useRetroStore() {
     }
   };
 
+  const saveActionItemAndReset = async (item) => {
+    if (!isHost) return;
+    try {
+      await updateDoc(sessionRef(sessionId), {
+        sessionActionItems: arrayUnion(item),
+        currentPhase: 1,
+        focusId: null,
+        drillPath: []
+      });
+    } catch (err) {
+      console.error('[STORE] saveActionItemAndReset failed:', err);
+      setError(`Sync-Fehler: ${err.message}`);
+    }
+  };
+
   const clearError = () => setError(null);
 
   return {
@@ -335,6 +351,7 @@ export function useRetroStore() {
     // Actions
     loginAdmin, logout, joinSession, createSession, leaveSession,
     addEntry, toggleVote, toggleBlur, setDrillPhase,
-    setManualPhase, jumpToHistory, completeRetro
+    setManualPhase, jumpToHistory, completeRetro,
+    saveActionItemAndReset
   };
 }

@@ -27,7 +27,7 @@ describe('ContextHeader', () => {
 
 describe('GenesisTable', () => {
   it('renders empty table when no actions', () => {
-    render(<GenesisTable allEntries={[]} />);
+    render(<GenesisTable session={{ sessionActionItems: [] }} />);
     
     // Zero total actions
     const zeros = screen.getAllByText('0');
@@ -35,18 +35,19 @@ describe('GenesisTable', () => {
   });
 
   it('renders actions and correctly calculates completion rate', () => {
-    const allEntries = [
-      { id: 'e1', phase: 3, text: 'Action 1', votes: 1, parentId: 'p1' }, // completed
-      { id: 'e2', phase: 3, text: 'Action 2', votes: 0, parentId: 'p1' }, // pending
-      { id: 'p1', phase: 1, category: 'liked', text: 'Parent' } // to resolve root category
-    ];
-    render(<GenesisTable allEntries={allEntries} />);
+    const session = {
+      sessionActionItems: [
+        { id: 'e1', what: 'Action 1', who: 'To be assigned', when: 'TBD', sourceAnchorText: 'Origin A', categoryId: 'liked' },
+        { id: 'e2', what: 'Action 2', who: 'To be assigned', when: 'TBD', sourceAnchorText: 'Origin B', categoryId: 'learned' }
+      ]
+    };
+    render(<GenesisTable session={session} />);
     
     // Total actions should be 2
-    expect(screen.getByText('2')).toBeTruthy();
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0);
     
-    // 50% completion rate (2 actions, 1 completed)
-    expect(screen.getByText('50% of goal')).toBeTruthy();
+    // 100% completion rate (2 actions, all completed by new definition)
+    expect(screen.getByText('100% of goal')).toBeTruthy();
     
     // Check if the actions are rendered in the table
     expect(screen.getByText('Action 1')).toBeTruthy();

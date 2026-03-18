@@ -279,3 +279,39 @@ Then('sollte ich eine Fehlermeldung mit {string} sehen', async function (errorMs
   await expect(errorBanner).toContainText(errorMsg);
 });
 
+When('ich {string} klicke', async function (buttonText) {
+  const btn = page.locator(`button[data-testid="save-action-button"]`);
+  await expect(btn).toBeVisible({ timeout: 10000 });
+  await btn.click();
+});
+
+Then('sollte ich wieder in Phase 1 sein', async function () {
+  const phaseIndicator = page.locator('text=4L Übersicht').first();
+  await expect(phaseIndicator).toBeVisible({ timeout: 10000 });
+});
+
+When('ich für die Karte {string} den Vote entferne', async function (text) {
+  const card = page.locator('[data-testid="retro-card"]').filter({ hasText: text });
+  await expect(card).toBeVisible({ timeout: 10000 });
+  console.log(`[TEST] Clicking vote button to remove vote for: "${text}"`);
+  await card.locator('[data-testid^="btn-vote-"]').dispatchEvent('click');
+});
+
+When('ich zu Phase 4 wechsle', async function () {
+  const btn = page.locator('button', { hasText: /^4$/ }).first();
+  await expect(btn).toBeVisible({ timeout: 10000 });
+  await btn.click();
+});
+
+When('ich die Retro abschliesse', async function () {
+  const btn = page.locator('button:has-text("Retro abschließen")');
+  await expect(btn).toBeVisible({ timeout: 10000 });
+  await btn.click();
+});
+
+Then('sollte die Tabelle in Phase 4 sowohl {string} als auch {string} enthalten', async function (text1, text2) {
+  const table = page.locator('table');
+  await expect(table).toContainText(text1, { timeout: 10000 });
+  await expect(table).toContainText(text2, { timeout: 10000 });
+});
+

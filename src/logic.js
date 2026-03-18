@@ -104,3 +104,11 @@ export function findRootCategory(entry, allEntries) {
   }
   return current?.category || null;
 }
+
+/**
+ * addActionItem - Pure function to append a new action item to a list, preserving integrity.
+ */
+export function addActionItem(items, newItem) {
+  if (!items) return [newItem];
+  return [...items, newItem];
+}

@@ -1,5 +1,24 @@
 import { describe, it, expect } from 'vitest';
-import { getCategoryWinners, findRootCategory, filterEntries, getWinner, updateHistory, calculateCurrentPhase } from './logic';
+import { getCategoryWinners, findRootCategory, filterEntries, getWinner, updateHistory, calculateCurrentPhase, addActionItem } from './logic';
+
+describe('addActionItem', () => {
+  it('appends a new item to an existing array, returning a new array instance to preserve list integrity', () => {
+    const original = [{ id: '1', what: 'A' }];
+    const newItem = { id: '2', what: 'B' };
+    const updated = addActionItem(original, newItem);
+    
+    expect(updated).toHaveLength(2);
+    expect(updated[1]).toEqual(newItem);
+    expect(original).toHaveLength(1);
+    expect(updated).not.toBe(original);
+  });
+  
+  it('returns an array with the new item if items is null or undefined', () => {
+    const newItem = { id: '1', what: 'A' };
+    expect(addActionItem(null, newItem)).toEqual([newItem]);
+    expect(addActionItem(undefined, newItem)).toEqual([newItem]);
+  });
+});
 
 describe('getCategoryWinners', () => {
   it('returns an empty object for empty entries', () => {

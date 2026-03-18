@@ -95,7 +95,7 @@ export function ContextHeader({ drillPath, currentPhase, history = [] }) {
 
 
 // ── Entry Card Component ──────────────────────────────────────────────────────
-export function EntryCard({ entry, user, session, currentPhase, toggleVote, isWinner, isCategoryWinner, onDrill, history = [] }) {
+export function EntryCard({ entry, user, session, currentPhase, toggleVote, isWinner, isCategoryWinner, onDrill, onSaveAction, history = [] }) {
   const phase = PHASES[currentPhase] || PHASES[1];
   const isBlurred = session?.isBlurred && entry.userId !== user?.uid;
   const hasVoted  = entry.voters?.includes(user?.uid);
@@ -137,6 +137,14 @@ export function EntryCard({ entry, user, session, currentPhase, toggleVote, isWi
           {phase.nextLabel}
         </button>
       )}
+
+      {isCategoryWinner && currentPhase === 3 && onSaveAction && (
+        <button data-testid="save-action-button" onClick={onSaveAction}
+          className={`mt-6 w-full flex items-center justify-center gap-3 py-4.5 px-6 rounded-[1.5rem] text-[13px] font-black transition-all active:scale-95 border-2 shadow-sm bg-emerald-600 text-white border-transparent hover:brightness-110`}>
+          <CheckSquare className="w-4 h-4" />
+          Massnahme sichern & Nächstes Thema
+        </button>
+      )}
     </div>
   );
 }
@@ -149,7 +157,7 @@ export function EmptyState() {
   );
 }
 
-export function BoardView({ entries, currentPhase, user, session, toggleVote, onDrill, winnerId, categoryWinners }) {
+export function BoardView({ entries, currentPhase, user, session, toggleVote, onDrill, onSaveAction, winnerId, categoryWinners }) {
   const history = session?.navigationHistory || [];
 
   if (currentPhase === 1) {
@@ -177,6 +185,7 @@ export function BoardView({ entries, currentPhase, user, session, toggleVote, on
                   isWinner={winnerId === entry.id}
                   isCategoryWinner={categoryWinners && categoryWinners[entry.category]?.id === entry.id}
                   onDrill={onDrill ? () => onDrill(entry) : null}
+                  onSaveAction={null}
                   history={history} />
               ))}
               {items.length === 0 && <EmptyState />}
@@ -196,6 +205,7 @@ export function BoardView({ entries, currentPhase, user, session, toggleVote, on
           isWinner={winnerId === entry.id}
           isCategoryWinner={true} // In drill phases, every card shown is part of the drill path
           onDrill={onDrill && PHASES[currentPhase].nextPhase ? () => onDrill(entry) : null}
+          onSaveAction={onSaveAction && currentPhase === 3 ? () => onSaveAction(entry) : null}
           history={history} />
       ))}
       {entries.length === 0 && <EmptyState />}
@@ -382,11 +392,11 @@ export function AdminControlTower({ store }) {
 }
 
 // ── Genesis Table (Phase 4 Dashboard) ───────────────────────────────────────
-export function GenesisTable({ allEntries }) {
-  const actions = allEntries.filter(e => e.phase === 3);
+export function GenesisTable({ allEntries, session }) {
+  const actions = session?.sessionActionItems || [];
   const totalActions = actions.length;
-  // Completion logic: if it has any votes in phase 3, it's "committed/done" for now
-  const completedActions = actions.filter(a => a.votes > 0).length;
+  // All recorded actions are considered committed for now
+  const completedActions = actions.length;
   const rate = totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0;
 
   return (
@@ -433,19 +443,18 @@ export function GenesisTable({ allEntries }) {
               </tr>
             </thead>
             <tbody>
-              {actions.map((entry) => {
-                const rootCatId = findRootCategory(entry, allEntries);
-                const cat = CATEGORIES.find(c => c.id === rootCatId) || CATEGORIES[0];
+              {actions.map((item) => {
+                const cat = CATEGORIES.find(c => c.id === item.categoryId) || CATEGORIES[0];
                 return (
-                  <tr key={entry.id} className="group hover:bg-slate-50/50 transition-all border-b last:border-none">
+                  <tr key={item.id} className="group hover:bg-slate-50/50 transition-all border-b last:border-none">
                     <td className="px-12 py-10">
                       <div className="flex items-center gap-6">
                         <div className={`w-2.5 h-12 rounded-full ${PHASE_THEMES[3].accent} opacity-20 group-hover:opacity-100 transition-opacity`}/>
                         <div>
-                          <p className="font-black text-slate-800 text-[17px] tracking-tight">{entry.text}</p>
+                          <p className="font-black text-slate-800 text-[17px] tracking-tight">{item.what}</p>
                           <div className="flex items-center gap-4 mt-2">
-                            <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-1.5"><Clock className="w-3.5 h-3.5"/> Due Dec 15</span>
-                            <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-1.5"><Activity className="w-3.5 h-3.5"/> High Priority</span>
+                            <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-1.5"><Clock className="w-3.5 h-3.5"/> Due {item.when}</span>
+                            <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-1.5"><Activity className="w-3.5 h-3.5"/> Origin: {item.sourceAnchorText}</span>
                           </div>
                         </div>
                       </div>
@@ -467,8 +476,8 @@ export function GenesisTable({ allEntries }) {
                     <td className="px-12 py-10 text-right">
                       <div className="flex items-center justify-end gap-4 group/user">
                         <div className="text-right">
-                          <p className="text-[13px] font-black text-slate-700">Sarah M.</p>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Lead Engineer</p>
+                          <p className="text-[13px] font-black text-slate-700">{item.who}</p>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Assignee</p>
                         </div>
                         <div className="p-3 bg-slate-100 rounded-[1.25rem] text-slate-400 group-hover/user:bg-indigo-600 group-hover/user:text-white transition-colors duration-300 shadow-sm"><User className="w-5 h-5"/></div>
                       </div>

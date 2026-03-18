@@ -38,3 +38,30 @@ Funktionalität: Vollständiger Retro Flow
     Gegeben sei ich bin auf der Startseite im Test-Modus
     Wenn ich "FALSCH" als Session Code eingebe und beitrete
     Dann sollte ich eine Fehlermeldung mit "Session-ID nicht gefunden!" sehen
+
+  Szenario: Zwei Themen nacheinander bearbeiten
+    Gegeben sei ich bin auf der Startseite im Test-Modus
+    Wenn ich eine neue Session namens "Sequential Drilling Session" erstelle
+    Und ich eine Karte "Thema A" in der Kategorie "liked" schreibe
+    Und ich eine Karte "Thema B" in der Kategorie "learned" schreibe
+    Und ich für die Karte "Thema A" vote
+    Und ich den Gewinner ermittle und mit "Ursachenforschung" starte
+    Und ich die Ursache "Ursache A" eingebe
+    Und ich für die Ursache "Ursache A" vote
+    Und ich den Ursachen-Gewinner ermittle und mit "Lösung finden" starte
+    Und ich die Lösung "Massnahme A" eingebe
+    Und ich für die Lösung "Massnahme A" vote
+    Und ich "Massnahme sichern & Nächstes Thema" klicke
+    Dann sollte ich wieder in Phase 1 sein
+    Wenn ich für die Karte "Thema A" den Vote entferne
+    Und ich für die Karte "Thema B" vote
+    Und ich den Gewinner ermittle und mit "Ursachenforschung" starte
+    Und ich die Ursache "Ursache B" eingebe
+    Und ich für die Ursache "Ursache B" vote
+    Und ich den Ursachen-Gewinner ermittle und mit "Lösung finden" starte
+    Und ich die Lösung "Massnahme B" eingebe
+    Und ich für die Lösung "Massnahme B" vote
+    Und ich "Massnahme sichern & Nächstes Thema" klicke
+    Und ich zu Phase 4 wechsle
+    Und ich die Retro abschliesse
+    Dann sollte die Tabelle in Phase 4 sowohl "Massnahme A" als auch "Massnahme B" enthalten

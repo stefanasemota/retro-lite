@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, LogOut, Send, ShieldCheck, Eye, EyeOff, AlertCircle, ChevronLeft, X, Sparkles } from 'lucide-react';
 import { useRetroStore } from './useRetroStore';
-import { CATEGORIES, getWinner, getCategoryWinners } from './logic';
+import { CATEGORIES, getWinner, getCategoryWinners, findRootCategory } from './logic';
 import { PHASES, BoardView, ContextSidebar, AdminControlTower, ContextHeader, GenesisTable } from './components';
 
 export default function App() {
@@ -56,6 +56,21 @@ export default function App() {
     const newPath = [...store.drillPath, { parentId: entry.id, parentText: entry.text, phase: store.currentPhase }];
     store.setDrillPhase(phase.nextPhase, entry.id, newPath);
     setNewEntry('');
+  };
+
+  const handleSaveActionItem = (entry) => {
+    if (!store.isHost) return;
+    const sourceAnchorText = store.drillPath[0]?.parentText || 'Unbekannt';
+    const rootCatId = findRootCategory(entry, store.allEntries) || CATEGORIES[0].id;
+    const actionItem = {
+      id: entry.id,
+      what: entry.text,
+      who: 'To be assigned',
+      when: 'TBD',
+      sourceAnchorText,
+      categoryId: rootCatId
+    };
+    store.saveActionItemAndReset(actionItem);
   };
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -200,7 +215,7 @@ export default function App() {
           )}
 
           {/* ════════ LANDING VIEW ════════ */}
-          {store.view !== 'session' ? (
+          {store.view === 'landing' ? (
             <div className="max-w-md mx-auto space-y-10 py-12">
               <div className="text-center space-y-4">
                 <h2 className="text-4xl lg:text-5xl font-black text-slate-800 tracking-tighter leading-tight italic">Teams befähigen.<br/><span className="text-indigo-600 underline decoration-indigo-200 uppercase not-italic">Insights sammeln.</span></h2>
@@ -234,7 +249,7 @@ export default function App() {
           ) : (
             <div className="space-y-12 w-full">
               {store.view === 'summary' ? (
-                <GenesisTable allEntries={store.allEntries} />
+                <GenesisTable allEntries={store.allEntries} session={store.session} />
               ) : (
                 <>
                   {/* Board Feed */}
@@ -247,6 +262,7 @@ export default function App() {
                     winnerId={winner?.id} 
                     categoryWinners={categoryWinners}
                     onDrill={store.isHost ? handleDrillInto : null} 
+                    onSaveAction={store.isHost ? handleSaveActionItem : null}
                     history={store.session?.navigationHistory}
                   />
                 </>
