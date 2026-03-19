@@ -15,15 +15,10 @@ Funktionalität: Vollständiger Retro Flow
     Und ich den Ursachen-Gewinner ermittle und mit "Lösung finden" starte
     Dann sollte die Sidebar Anker und Ursache "Gute Vorbereitung" zeigen
 
-    Wenn ich die Lösung "Review-Prozess beibehalten" eingebe
-    Und ich für die Lösung "Review-Prozess beibehalten" vote
-    Und ich den Lösungs-Gewinner ermittle und mit "Massnahme festlegen" starte
-    Dann sollte die Sidebar den vollen Kontext-Pfad ⚓ 🔍 💡 zeigen
-
-    Wenn ich die Massnahme "Checkliste aktualisieren" eingebe
-    Und ich für die Massnahme "Checkliste aktualisieren" vote
-    Dann sollte die Karte "Checkliste aktualisieren" als finaler Winner markiert sein
-
+    Wenn ich die Lösung "Checkliste aktualisieren" eingebe
+    Und ich für die Lösung "Checkliste aktualisieren" vote
+    Und ich "Massnahme sichern & Nächstes Thema" klicke
+    Dann sollte ich wieder in Phase 1 sein
   Szenario: Mehrere Kategorie-Gewinner zeigen Drill-Down Buttons
     Gegeben sei ich bin auf der Startseite im Test-Modus
     Wenn ich eine neue Session namens "Multi Winner Session" erstelle

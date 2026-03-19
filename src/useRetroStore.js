@@ -340,6 +340,40 @@ export function useRetroStore() {
     }
   };
 
+  const updateActionItem = async (itemId, updates) => {
+    if (!isHost) return;
+    const items = session?.sessionActionItems || [];
+    const newItems = items.map(i => i.id === itemId ? { ...i, ...updates } : i);
+    try {
+      await updateDoc(sessionRef(sessionId), { sessionActionItems: newItems });
+    } catch (err) {
+      console.error('[STORE] updateActionItem failed:', err);
+      setError(`Sync-Fehler: ${err.message}`);
+    }
+  };
+
+  const exportActionsToCSV = () => {
+    const actions = session?.sessionActionItems || [];
+    if (actions.length === 0) return;
+    const rows = [
+      ['Origin', 'Action', 'Assignee', 'Due Date'],
+      ...actions.map(a => [
+        `"${String(a.sourceAnchorText || '').replace(/"/g, '""')}"`,
+        `"${String(a.what || '').replace(/"/g, '""')}"`,
+        `"${String(a.who || '').replace(/"/g, '""')}"`,
+        `"${String(a.when || '').replace(/"/g, '""')}"`
+      ])
+    ];
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + rows.map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Retro_Actions_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const clearError = () => setError(null);
 
   return {
@@ -352,6 +386,6 @@ export function useRetroStore() {
     loginAdmin, logout, joinSession, createSession, leaveSession,
     addEntry, toggleVote, toggleBlur, setDrillPhase,
     setManualPhase, jumpToHistory, completeRetro,
-    saveActionItemAndReset
+    saveActionItemAndReset, updateActionItem, exportActionsToCSV
   };
 }

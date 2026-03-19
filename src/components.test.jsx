@@ -152,7 +152,8 @@ describe('AdminControlTower', () => {
       currentPhase: 1,
       setManualPhase: vi.fn(),
       jumpToHistory: vi.fn(),
-      completeRetro: vi.fn()
+      completeRetro: vi.fn(),
+      exportActionsToCSV: vi.fn()
     };
   });
 

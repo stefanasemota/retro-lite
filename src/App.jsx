@@ -106,9 +106,9 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-black text-xl tracking-tight text-slate-800 leading-none truncate max-w-[150px] md:max-w-none">{store.session?.sessionName ?? 'Retro-Lite'}</h1>
-              <div className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
-                <div className={`w-1.5 h-1.5 rounded-full ${phase.accent} animate-pulse`} />
-                {phase.id === 4 ? 'Genesis Overview' : `Phase ${phase.id}: ${phase.label}`}
+              <div className={`mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] ${phase.bg.replace('/50', '')} ${phase.text}`}>
+                <div className={`w-2 h-2 rounded-full ${phase.accent} animate-pulse`} />
+                ● PHASE {phase.id}: {phase.label}
               </div>
             </div>
           </div>
@@ -247,8 +247,8 @@ export default function App() {
             </div>
           ) : (
             <div className="space-y-12 w-full">
-              {store.view === 'summary' ? (
-                <GenesisTable allEntries={store.allEntries} session={store.session} />
+              {store.view === 'summary' || store.currentPhase === 4 ? (
+                <GenesisTable session={store.session} updateActionItem={store.updateActionItem} isHost={store.isHost} />
               ) : (
                 <>
                   {/* Board Feed */}

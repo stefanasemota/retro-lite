@@ -408,7 +408,7 @@ export function AdminControlTower({ store }) {
 
       {store.currentPhase === 4 && (
         <button 
-          onClick={store.completeRetro}
+          onClick={() => { store.exportActionsToCSV(); store.completeRetro(); }}
           className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-black text-[13px] uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/40 flex items-center justify-center gap-3 mt-4"
         >
           <CheckSquare className="w-5 h-5" />
@@ -420,7 +420,7 @@ export function AdminControlTower({ store }) {
 }
 
 // ── Genesis Table (Phase 4 Dashboard) ───────────────────────────────────────
-export function GenesisTable({ allEntries, session }) {
+export function GenesisTable({ session, updateActionItem, isHost }) {
   const actions = session?.sessionActionItems || [];
   const totalActions = actions.length;
   // All recorded actions are considered committed for now
@@ -481,7 +481,6 @@ export function GenesisTable({ allEntries, session }) {
                         <div>
                           <p className="font-black text-slate-800 text-[17px] tracking-tight">{item.what}</p>
                           <div className="flex items-center gap-4 mt-2">
-                            <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-1.5"><Clock className="w-3.5 h-3.5"/> Due {item.when}</span>
                             <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-1.5"><Activity className="w-3.5 h-3.5"/> Origin: {item.sourceAnchorText}</span>
                           </div>
                         </div>
@@ -494,19 +493,26 @@ export function GenesisTable({ allEntries, session }) {
                       </div>
                     </td>
                     <td className="px-12 py-10">
-                      <div className="flex flex-col gap-1">
-                         <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div className={`h-full ${PHASE_THEMES[3].accent} w-3/4`}/>
-                         </div>
-                         <span className="text-[9px] font-black uppercase text-slate-400">75% Ready</span>
+                      <div className="flex flex-col gap-2">
+                        <input
+                          type="date"
+                          disabled={!isHost}
+                          className="bg-slate-50 border border-slate-200 text-slate-700 text-[12px] font-bold px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+                          value={item.when !== 'TBD' ? item.when : ''}
+                          onChange={(e) => updateActionItem(item.id, { when: e.target.value || 'TBD' })}
+                        />
                       </div>
                     </td>
                     <td className="px-12 py-10 text-right">
-                      <div className="flex items-center justify-end gap-4 group/user">
-                        <div className="text-right">
-                          <p className="text-[13px] font-black text-slate-700">{item.who}</p>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Assignee</p>
-                        </div>
+                      <div className="flex items-center justify-end gap-3 group/user">
+                        <input
+                          type="text"
+                          placeholder="Assignee..."
+                          disabled={!isHost}
+                          className="bg-transparent border-b-2 border-slate-100 text-slate-800 text-[14px] font-black text-right px-2 py-1 outline-none focus:border-indigo-400 disabled:opacity-50 w-32 transition-colors placeholder:text-slate-300"
+                          value={item.who !== 'To be assigned' ? item.who : ''}
+                          onChange={(e) => updateActionItem(item.id, { who: e.target.value || 'To be assigned' })}
+                        />
                         <div className="p-3 bg-slate-100 rounded-[1.25rem] text-slate-400 group-hover/user:bg-indigo-600 group-hover/user:text-white transition-colors duration-300 shadow-sm"><User className="w-5 h-5"/></div>
                       </div>
                     </td>
