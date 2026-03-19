@@ -14,5 +14,5 @@ Funktionalität: Navigations-Konsistenz
     
     Wenn ich zurück zu Phase 1 springe
     Dann sollte die Karte "Unit Tests verbessern" 1 Stimme zeigen
-    Und die Karte "Unit Tests verbessern" sollte einen "Drilled" Indikator zeigen
+    Und die Karte "Unit Tests verbessern" sollte einen "DRILLED" Indikator zeigen
     Und der Context-Header sollte "4L Übersicht" und "1 Branches aktiv" zeigen

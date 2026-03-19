@@ -254,10 +254,10 @@ Then('sollte die Karte {string} {int} Stimme zeigen', async function (text, coun
   await expect(card.locator('span:has-text("' + count + '")')).toBeVisible({ timeout: 5000 });
 });
 
-Then('die Karte {string} sollte einen "Drilled" Indikator zeigen', async function (text) {
+Then('die Karte {string} sollte einen "DRILLED" Indikator zeigen', async function (text) {
   const card = page.locator('[data-testid="retro-card"]').filter({ hasText: text });
-  // Check for the "Drilled" pill
-  await expect(card.locator('span:has-text("Drilled")')).toBeVisible({ timeout: 10000 });
+  // Check for the "DRILLED" pill
+  await expect(card.locator('span:has-text("DRILLED")')).toBeVisible({ timeout: 10000 });
 });
 
 Then('der Context-Header sollte {string} und {string} zeigen', async function (text1, text2) {

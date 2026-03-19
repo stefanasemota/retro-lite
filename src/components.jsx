@@ -93,6 +93,30 @@ export function ContextHeader({ drillPath, currentPhase, history = [] }) {
   );
 }
 
+export function AnchorBanner({ drillPath, currentPhase }) {
+  if (currentPhase < 2 || !drillPath || drillPath.length === 0) return null;
+  const currentTarget = drillPath[drillPath.length - 1];
+  
+  const theme = currentPhase === 2 ? 'bg-indigo-900 border-indigo-700 text-indigo-100 shadow-indigo-900/30' : 'bg-violet-900 border-violet-700 text-violet-100 shadow-violet-900/30';
+  const icon = currentPhase === 2 ? '⚓' : '🔍';
+  const label = currentPhase === 2 ? 'Fokus' : 'Ursache';
+
+  return (
+    <div className={`p-6 rounded-[2rem] border ${theme} shadow-2xl mb-6 relative overflow-hidden group/anchor`}>
+      <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-[40px] rounded-full -mr-16 -mt-16 group-hover/anchor:scale-150 transition-transform duration-1000" />
+      <div className="relative z-10">
+        <div className="flex items-center gap-2 mb-2 opacity-80">
+          <span className="text-xl">{icon}</span>
+          <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+        </div>
+        <p className="text-[18px] font-black leading-snug italic text-white tracking-tight">
+          "{currentTarget.parentText}"
+        </p>
+      </div>
+    </div>
+  );
+}
+
 
 // ── Entry Card Component ──────────────────────────────────────────────────────
 export function EntryCard({ entry, user, session, currentPhase, toggleVote, isWinner, isCategoryWinner, onDrill, onSaveAction, history = [] }) {
@@ -125,7 +149,10 @@ export function EntryCard({ entry, user, session, currentPhase, toggleVote, isWi
             <span className="text-[15px] font-black tracking-tighter">{entry.votes || 0}</span>
           </button>
           {wasDrilled && (
-            <span data-testid="drilled-pill" className={`text-[9px] font-black uppercase tracking-[0.2em] ${phase.text} ${phase.bg} px-3 py-1.5 rounded-full border ${phase.border} italic`}>Drilled</span>
+            <span data-testid="drilled-pill" className="bg-slate-800 text-[10px] text-white px-3 py-1.5 rounded-[1rem] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg relative group overflow-hidden">
+              <span className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform"/>
+              <Search className="w-3.5 h-3.5 text-emerald-400" /> DRILLED
+            </span>
           )}
         </div>
       </div>
@@ -157,7 +184,7 @@ export function EmptyState() {
   );
 }
 
-export function BoardView({ entries, currentPhase, user, session, toggleVote, onDrill, onSaveAction, winnerId, categoryWinners }) {
+export function BoardView({ entries, currentPhase, user, session, toggleVote, onDrill, onSaveAction, winnerId, categoryWinners, drillPath }) {
   const history = session?.navigationHistory || [];
 
   if (currentPhase === 1) {
@@ -199,6 +226,7 @@ export function BoardView({ entries, currentPhase, user, session, toggleVote, on
   // Flat list for Drill phases
   return (
     <div className="space-y-3 mt-2">
+      <AnchorBanner drillPath={drillPath} currentPhase={currentPhase} />
       {entries.map((entry) => (
         <EntryCard key={entry.id} entry={entry} user={user} session={session} currentPhase={currentPhase}
           toggleVote={toggleVote} 
@@ -364,7 +392,7 @@ export function AdminControlTower({ store }) {
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">{phaseIcon}</span>
                     <span className={`text-[9px] font-black uppercase tracking-widest ${isActive ? 'text-indigo-400' : 'text-slate-500'}`}>
-                      Phase {item.phase}
+                      Phase {item.phase}/4
                     </span>
                     {isActive && <div className="ml-auto w-1.5 h-1.5 bg-indigo-400 rounded-full animate-ping" />}
                   </div>

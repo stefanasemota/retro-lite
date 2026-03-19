@@ -188,7 +188,7 @@ export default function App() {
 
                   <div className="relative group/input">
                     <textarea data-testid="entry-input" 
-                      placeholder={store.currentPhase === 1 ? 'Share your perspective...' : 'Your contribution...'} 
+                      placeholder={store.currentPhase === 1 ? 'Share your perspective...' : store.currentPhase === 2 ? 'Warum ist das passiert?' : 'Wie lösen wir das?'} 
                       className="w-full bg-slate-50 p-8 rounded-[3rem] text-[17px] min-h-[200px] focus:ring-[15px] focus:ring-slate-100 outline-none border-2 border-transparent focus:border-white focus:bg-white resize-none font-bold text-slate-800 leading-relaxed placeholder:text-slate-300 transition-all shadow-inner" 
                       value={newEntry} onChange={e => setNewEntry(e.target.value)} 
                     />
@@ -264,6 +264,7 @@ export default function App() {
                     onDrill={store.isHost ? handleDrillInto : null} 
                     onSaveAction={store.isHost ? handleSaveActionItem : null}
                     history={store.session?.navigationHistory}
+                    drillPath={store.drillPath}
                   />
                 </>
               )}

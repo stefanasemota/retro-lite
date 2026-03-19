@@ -53,6 +53,7 @@ Funktionalität: Vollständiger Retro Flow
     Und ich für die Lösung "Massnahme A" vote
     Und ich "Massnahme sichern & Nächstes Thema" klicke
     Dann sollte ich wieder in Phase 1 sein
+    Und die Karte "Thema A" sollte einen "DRILLED" Indikator zeigen
     Wenn ich für die Karte "Thema A" den Vote entferne
     Und ich für die Karte "Thema B" vote
     Und ich den Gewinner ermittle und mit "Ursachenforschung" starte
