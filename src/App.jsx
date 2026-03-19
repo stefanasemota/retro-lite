@@ -98,7 +98,7 @@ export default function App() {
       )}
 
       {/* ── Header ── */}
-      <header className={`${phase.headerBg} backdrop-blur-md border-b border-slate-100 px-8 py-5 flex justify-between items-center sticky top-0 z-50 transition-all duration-500 shadow-sm`}>
+      <header className={`${phase.headerBg} backdrop-blur-md border-b border-slate-100 px-4 lg:px-8 xl:px-12 py-5 flex justify-between items-center sticky top-0 z-50 transition-all duration-500 shadow-sm w-full`}>
         <div className="flex items-center gap-10 overflow-hidden flex-1">
           <div className="flex items-center gap-5 shrink-0">
             <div className={`p-3 rounded-[1.25rem] shadow-xl text-white ${phase.accent} transition-transform hover:scale-110 duration-500`}>
@@ -141,11 +141,11 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-[1700px] mx-auto flex flex-col lg:flex-row gap-6 px-4 lg:px-6 pt-8 pb-32 items-start w-full relative">
+      <main className="w-full xl:max-w-[2000px] 2xl:max-w-[2400px] mx-auto flex flex-col lg:flex-row gap-6 xl:gap-10 px-4 lg:px-8 xl:px-12 pt-8 pb-32 items-start relative">
         
         {/* ── Left Sidebar: Spatial Navigation & Input ── */}
         {store.view === 'session' && (
-          <div className="w-full lg:w-[380px] shrink-0 lg:sticky lg:top-28 space-y-8 animate-in slide-in-from-left-8 duration-700">
+          <div className="w-full lg:w-[360px] xl:w-[400px] shrink-0 lg:sticky lg:top-28 space-y-8 animate-in slide-in-from-left-8 duration-700">
             <div className={`bg-white p-10 rounded-[4rem] shadow-2xl transition-all duration-500 border border-slate-50 space-y-8 relative overflow-hidden group/card`}>
               <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-50/50 blur-[60px] rounded-full -mr-20 -mt-20 -z-0 group-hover/card:scale-150 transition-transform duration-1000" />
               
@@ -200,7 +200,6 @@ export default function App() {
                 </div>
               </div>
             </div>
-            {store.isHost && <AdminControlTower store={store} />}
           </div>
         )}
 
@@ -274,8 +273,9 @@ export default function App() {
 
         {/* ── Right Sidebar: Context Trail ── */}
         {store.session && (
-          <div className="hidden 2xl:block w-[280px] shrink-0 lg:sticky lg:top-28 self-start">
+          <div className="hidden xl:flex flex-col gap-8 w-[280px] 2xl:w-[340px] shrink-0 lg:sticky lg:top-28 self-start">
             <ContextSidebar drillPath={store.drillPath} currentPhase={store.currentPhase} />
+            {store.view === 'session' && store.isHost && <AdminControlTower store={store} />}
           </div>
         )}
       </main>

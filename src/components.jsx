@@ -195,7 +195,7 @@ export function BoardView({ entries, currentPhase, user, session, toggleVote, on
     }));
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 xl:gap-8 mt-4 items-start w-full">
         {entriesByCategory.map(({ cat, items }) => (
           <div key={cat.id} className="space-y-4">
             <div className="flex items-center justify-between px-3">
