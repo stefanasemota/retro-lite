@@ -249,6 +249,10 @@ Then('sollte der Context-Header {string} zeigen', async function (expectedText) 
   await expect(header).toContainText(expectedText.replace('⚓', '').replace('"', '').trim());
 });
 
+Then('sollte das Eingabefeld nicht mehr sichtbar sein', async function () {
+  await expect(page.locator('[data-testid="entry-input"]')).toBeHidden({ timeout: 5000 });
+});
+
 Then('sollte die Karte {string} {int} Stimme zeigen', async function (text, count) {
   const card = page.locator('[data-testid="retro-card"]').filter({ hasText: text });
   await expect(card.locator('span:has-text("' + count + '")')).toBeVisible({ timeout: 5000 });

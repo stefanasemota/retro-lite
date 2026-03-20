@@ -59,5 +59,6 @@ Funktionalität: Vollständiger Retro Flow
     Und ich für die Lösung "Massnahme B" vote
     Und ich "Massnahme sichern & Nächstes Thema" klicke
     Und ich zu Phase 4 wechsle
+    Dann sollte das Eingabefeld nicht mehr sichtbar sein
     Und ich die Retro abschliesse
     Dann sollte die Tabelle in Phase 4 sowohl "Massnahme A" als auch "Massnahme B" enthalten

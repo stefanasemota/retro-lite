@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, LogOut, Send, ShieldCheck, Eye, EyeOff, AlertCircle, ChevronLeft, X, Sparkles } from 'lucide-react';
+import { Plus, LogOut, Send, ShieldCheck, Eye, EyeOff, AlertCircle, ChevronLeft, X, Sparkles, CheckSquare } from 'lucide-react';
 import { useRetroStore } from './useRetroStore';
 import { CATEGORIES, getWinner, getCategoryWinners, findRootCategory } from './logic';
 import { PHASES, BoardView, ContextSidebar, AdminControlTower, ContextHeader, GenesisTable } from './components';
@@ -64,6 +64,7 @@ export default function App() {
     const rootCatId = findRootCategory(entry, store.allEntries) || CATEGORIES[0].id;
     const actionItem = {
       id: entry.id,
+      originalWhat: entry.text,
       what: entry.text,
       who: 'To be assigned',
       when: 'TBD',
@@ -106,9 +107,19 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-black text-xl tracking-tight text-slate-800 leading-none truncate max-w-[150px] md:max-w-none">{store.session?.sessionName ?? 'Retro-Lite'}</h1>
-              <div className={`mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] ${phase.bg.replace('/50', '')} ${phase.text}`}>
-                <div className={`w-2 h-2 rounded-full ${phase.accent} animate-pulse`} />
-                ● PHASE {phase.id}: {phase.label}
+              <div className="flex items-center gap-3 mt-2">
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] ${phase.bg.replace('/50', '')} ${phase.text}`}>
+                  <div className={`w-2 h-2 rounded-full ${phase.accent} animate-pulse`} />
+                  ● PHASE {phase.id}: {phase.label}
+                </div>
+                {store.currentPhase === 4 && store.isHost && (
+                  <button 
+                    onClick={() => { store.exportActionsToCSV(); store.completeRetro(); }}
+                    className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-full text-[10px] uppercase font-black tracking-widest transition-all shadow-md shadow-emerald-900/20 active:scale-95 animate-in fade-in duration-500"
+                  >
+                    <CheckSquare className="w-3.5 h-3.5" /> Retro abschließen
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -146,60 +157,72 @@ export default function App() {
         {/* ── Left Sidebar: Spatial Navigation & Input ── */}
         {store.view === 'session' && (
           <div className="w-full lg:w-[360px] xl:w-[400px] shrink-0 lg:sticky lg:top-28 space-y-8 animate-in slide-in-from-left-8 duration-700">
-            <div className={`bg-white p-10 rounded-[4rem] shadow-2xl transition-all duration-500 border border-slate-50 space-y-8 relative overflow-hidden group/card`}>
-              <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-50/50 blur-[60px] rounded-full -mr-20 -mt-20 -z-0 group-hover/card:scale-150 transition-transform duration-1000" />
-              
-              <div className="relative z-10 space-y-6">
-                <div className="flex items-center justify-between px-2">
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Collaborate</h3>
-                  <div className={`flex items-center gap-2 ${phase.bg} ${phase.text} px-5 py-2 rounded-full font-black text-[10px] uppercase shadow-inner border border-white`}>
-                    {phase.icon} {phase.label}
+            {store.currentPhase !== 4 ? (
+              <div className={`bg-white p-10 rounded-[4rem] shadow-2xl transition-all duration-500 border border-slate-50 space-y-8 relative overflow-hidden group/card`}>
+                <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-50/50 blur-[60px] rounded-full -mr-20 -mt-20 -z-0 group-hover/card:scale-150 transition-transform duration-1000" />
+                
+                <div className="relative z-10 space-y-6">
+                  <div className="flex items-center justify-between px-2">
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Collaborate</h3>
+                    <div className={`flex items-center gap-2 ${phase.bg} ${phase.text} px-5 py-2 rounded-full font-black text-[10px] uppercase shadow-inner border border-white`}>
+                      {phase.icon} {phase.label}
+                    </div>
                   </div>
-                </div>
 
-                {store.currentPhase === 1 && (
-                  <div className="grid grid-cols-2 gap-3">
-                    {CATEGORIES.map(cat => (
-                      <button key={cat.id} data-testid={`btn-category-${cat.id}`} onClick={() => setActiveCategory(cat.id)} 
-                        className={`px-4 py-3.5 rounded-[1.5rem] text-[11px] font-black border-2 transition-all text-center relative overflow-hidden group/cat ${
-                          activeCategory === cat.id ? `${cat.color} border-current shadow-lg scale-105 z-10` : 'bg-slate-50 border-transparent text-slate-400 hover:bg-white hover:border-slate-100'
-                        }`}>
-                        <div className="relative z-10 flex flex-col items-center gap-1.5">
-                          <span className="text-xl group-hover/cat:scale-125 transition-transform">{cat.icon}</span>
-                          <span className="uppercase tracking-widest">{cat.label}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  {/* Context-Persistent Targeting Info */}
-                  {inDrill && store.drillPath.length > 0 && (
-                    <div className={`p-5 rounded-[2rem] ${PHASES[store.currentPhase - 1]?.bg} border ${PHASES[store.currentPhase - 1]?.border} animate-in fade-in slide-in-from-top-2 duration-500`}>
-                      <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${PHASES[store.currentPhase - 1]?.text} flex items-center gap-2`}>
-                        {store.currentPhase === 2 ? '⚓ Targeting Anchor' : '🔍 Targeting Cause'}
-                      </p>
-                      <p className="text-[14px] font-black text-slate-700 leading-snug mt-2 line-clamp-2 italic tracking-tight">
-                        "{store.drillPath[store.drillPath.length - 1].parentText}"
-                      </p>
+                  {store.currentPhase === 1 && (
+                    <div className="grid grid-cols-2 gap-3">
+                      {CATEGORIES.map(cat => (
+                        <button key={cat.id} data-testid={`btn-category-${cat.id}`} onClick={() => setActiveCategory(cat.id)} 
+                          className={`px-4 py-3.5 rounded-[1.5rem] text-[11px] font-black border-2 transition-all text-center relative overflow-hidden group/cat ${
+                            activeCategory === cat.id ? `${cat.color} border-current shadow-lg scale-105 z-10` : 'bg-slate-50 border-transparent text-slate-400 hover:bg-white hover:border-slate-100'
+                          }`}>
+                          <div className="relative z-10 flex flex-col items-center gap-1.5">
+                            <span className="text-xl group-hover/cat:scale-125 transition-transform">{cat.icon}</span>
+                            <span className="uppercase tracking-widest">{cat.label}</span>
+                          </div>
+                        </button>
+                      ))}
                     </div>
                   )}
 
-                  <div className="relative group/input">
-                    <textarea data-testid="entry-input" 
-                      placeholder={store.currentPhase === 1 ? 'Share your perspective...' : store.currentPhase === 2 ? 'Warum ist das passiert?' : 'Wie lösen wir das?'} 
-                      className="w-full bg-slate-50 p-8 rounded-[3rem] text-[17px] min-h-[200px] focus:ring-[15px] focus:ring-slate-100 outline-none border-2 border-transparent focus:border-white focus:bg-white resize-none font-bold text-slate-800 leading-relaxed placeholder:text-slate-300 transition-all shadow-inner" 
-                      value={newEntry} onChange={e => setNewEntry(e.target.value)} 
-                    />
-                    <button data-testid="btn-submit-entry" onClick={handleAddEntry} disabled={!newEntry.trim()} 
-                      className={`absolute bottom-6 right-6 ${phase.accent} text-white p-5 rounded-3xl shadow-2xl disabled:opacity-20 hover:brightness-110 active:scale-90 transition-all hover:rotate-6`}>
-                      <Send className="w-6 h-6"/>
-                    </button>
+                  <div className="space-y-4">
+                    {/* Context-Persistent Targeting Info */}
+                    {inDrill && store.drillPath.length > 0 && (
+                      <div className={`p-5 rounded-[2rem] ${PHASES[store.currentPhase - 1]?.bg} border ${PHASES[store.currentPhase - 1]?.border} animate-in fade-in slide-in-from-top-2 duration-500`}>
+                        <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${PHASES[store.currentPhase - 1]?.text} flex items-center gap-2`}>
+                          {store.currentPhase === 2 ? '⚓ Targeting Anchor' : '🔍 Targeting Cause'}
+                        </p>
+                        <p className="text-[14px] font-black text-slate-700 leading-snug mt-2 line-clamp-2 italic tracking-tight">
+                          "{store.drillPath[store.drillPath.length - 1].parentText}"
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="relative group/input">
+                      <textarea data-testid="entry-input" 
+                        placeholder={store.currentPhase === 1 ? 'Share your perspective...' : store.currentPhase === 2 ? 'Warum ist das passiert?' : 'Wie lösen wir das?'} 
+                        className="w-full bg-slate-50 p-8 rounded-[3rem] text-[17px] min-h-[200px] focus:ring-[15px] focus:ring-slate-100 outline-none border-2 border-transparent focus:border-white focus:bg-white resize-none font-bold text-slate-800 leading-relaxed placeholder:text-slate-300 transition-all shadow-inner" 
+                        value={newEntry} onChange={e => setNewEntry(e.target.value)} 
+                      />
+                      <button data-testid="btn-submit-entry" onClick={handleAddEntry} disabled={!newEntry.trim()} 
+                        className={`absolute bottom-6 right-6 ${phase.accent} text-white p-5 rounded-3xl shadow-2xl disabled:opacity-20 hover:brightness-110 active:scale-90 transition-all hover:rotate-6`}>
+                        <Send className="w-6 h-6"/>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className={`bg-rose-50 p-10 rounded-[4rem] border border-rose-100 space-y-8 relative overflow-hidden group/card`}>
+                <div className="relative z-10 space-y-4">
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-rose-400">Protokoll-Modus</h3>
+                  <h4 className="text-3xl font-black text-rose-600 leading-tight tracking-tighter">Action<br/>Plan</h4>
+                  <p className="text-[13px] font-bold text-rose-800/60 leading-relaxed mt-4">
+                    Bitte verfeinere die beschlossenen Massnahmen und teile Verantwortlichkeiten zu.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

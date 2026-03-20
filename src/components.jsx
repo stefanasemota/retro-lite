@@ -415,15 +415,6 @@ export function AdminControlTower({ store }) {
         </div>
       </div>
 
-      {store.currentPhase === 4 && (
-        <button 
-          onClick={() => { store.exportActionsToCSV(); store.completeRetro(); }}
-          className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-black text-[13px] uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/40 flex items-center justify-center gap-3 mt-4"
-        >
-          <CheckSquare className="w-5 h-5" />
-          Retro abschließen
-        </button>
-      )}
     </div>
   );
 }
@@ -473,10 +464,10 @@ export function GenesisTable({ session, updateActionItem, isHost }) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b">
-                <th className="px-12 py-8">Genesis Action</th>
-                <th className="px-12 py-8">Context Origin</th>
-                <th className="px-12 py-8">Impact Status</th>
-                <th className="px-12 py-8 text-right">Assignee</th>
+                <th className="px-12 py-8 w-64">Beschlossene Lösung</th>
+                <th className="px-12 py-8">Konkrete Maßnahme (What)</th>
+                <th className="px-12 py-8 w-40">Timing / Impact</th>
+                <th className="px-12 py-8 text-right w-48">Assignee</th>
               </tr>
             </thead>
             <tbody>
@@ -485,21 +476,24 @@ export function GenesisTable({ session, updateActionItem, isHost }) {
                 return (
                   <tr key={item.id} className="group hover:bg-slate-50/50 transition-all border-b last:border-none">
                     <td className="px-12 py-10">
-                      <div className="flex items-center gap-6">
-                        <div className={`w-2.5 h-12 rounded-full ${PHASE_THEMES[3].accent} opacity-20 group-hover:opacity-100 transition-opacity`}/>
+                      <div className="flex items-start gap-4">
+                        <div className={`w-1.5 h-12 rounded-full ${PHASE_THEMES[3].accent} opacity-30 mt-1`}/>
                         <div>
-                          <p className="font-black text-slate-800 text-[17px] tracking-tight">{item.what}</p>
-                          <div className="flex items-center gap-4 mt-2">
-                            <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-1.5"><Activity className="w-3.5 h-3.5"/> Origin: {item.sourceAnchorText}</span>
+                          <p className="font-bold text-slate-700 text-[14px] leading-snug pr-4">{item.originalWhat || item.what}</p>
+                          <div className="flex items-center gap-4 mt-3">
+                            <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 rounded-md shadow-sm"><Activity className={`w-3 h-3 ${cat.text}`}/> {item.sourceAnchorText}</span>
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-12 py-10">
-                      <div className={`inline-flex items-center gap-3 px-5 py-2.5 rounded-2xl border-2 ${cat.color.replace('bg-', 'bg-opacity-10 bg-').replace('text-white', 'text-slate-600')}`}>
-                        <span className="text-xl">{cat.icon}</span>
-                        <span className="text-[11px] font-black uppercase tracking-widest">{cat.label}</span>
-                      </div>
+                      <textarea
+                        disabled={!isHost}
+                        placeholder="Erfasse die konkrete Massnahme..."
+                        className="w-full min-w-0 bg-white border-2 border-slate-100 text-emerald-800 text-[15px] font-bold px-4 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none h-[100px] shadow-sm transition-colors disabled:opacity-50 placeholder:text-slate-300"
+                        value={item.what}
+                        onChange={(e) => updateActionItem(item.id, { what: e.target.value })}
+                      />
                     </td>
                     <td className="px-12 py-10">
                       <div className="flex flex-col gap-2">
