@@ -101,7 +101,7 @@ describe('EmptyState', () => {
 
 describe('BoardView', () => {
   const entries = [
-    { id: '1', text: 'Liked Entry', category: 'liked' },
+    { id: '1', text: 'Liked Entry', category: 'liked', votes: 1 },
   ];
 
   it('renders Phase 1 with categories', () => {

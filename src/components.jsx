@@ -172,6 +172,13 @@ export function EntryCard({ entry, user, session, currentPhase, toggleVote, isWi
           Massnahme sichern & Nächstes Thema
         </button>
       )}
+
+      {!isCategoryWinner && currentPhase > 1 && (entry.votes || 0) === 0 && (
+        <div className="mt-6 w-full flex items-center justify-center gap-2 py-4 rounded-[1.5rem] bg-slate-50/50 border-2 border-dashed border-slate-100 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+          <Clock className="w-3.5 h-3.5 opacity-50" />
+          Warte auf Voting...
+        </div>
+      )}
     </div>
   );
 }
@@ -224,6 +231,8 @@ export function BoardView({ entries, currentPhase, user, session, toggleVote, on
   }
 
   // Flat list for Drill phases
+  const maxVotes = entries.length > 0 ? Math.max(...entries.map(e => e.votes || 0)) : 0;
+
   return (
     <div className="space-y-3 mt-2">
       <AnchorBanner drillPath={drillPath} currentPhase={currentPhase} />
@@ -231,7 +240,7 @@ export function BoardView({ entries, currentPhase, user, session, toggleVote, on
         <EntryCard key={entry.id} entry={entry} user={user} session={session} currentPhase={currentPhase}
           toggleVote={toggleVote} 
           isWinner={winnerId === entry.id}
-          isCategoryWinner={true} // In drill phases, every card shown is part of the drill path
+          isCategoryWinner={entry.votes === maxVotes && maxVotes > 0}
           onDrill={onDrill && PHASES[currentPhase].nextPhase ? () => onDrill(entry) : null}
           onSaveAction={onSaveAction && currentPhase === 3 ? () => onSaveAction(entry) : null}
           history={history} />
