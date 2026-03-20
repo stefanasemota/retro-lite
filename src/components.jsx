@@ -217,7 +217,7 @@ export function BoardView({ entries, currentPhase, user, session, toggleVote, on
                 <EntryCard key={entry.id} entry={entry} user={user} session={session} currentPhase={currentPhase}
                   toggleVote={toggleVote} 
                   isWinner={winnerId === entry.id}
-                  isCategoryWinner={categoryWinners && categoryWinners[entry.category]?.id === entry.id}
+                  isCategoryWinner={categoryWinners && categoryWinners[entry.category]?.includes(entry.id)}
                   onDrill={onDrill ? () => onDrill(entry) : null}
                   onSaveAction={null}
                   history={history} />

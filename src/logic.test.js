@@ -26,24 +26,24 @@ describe('getCategoryWinners', () => {
     expect(getCategoryWinners(null)).toEqual({});
   });
 
-  it('selects the entry with most votes in each category', () => {
+  it('selects the entries with most votes in each category', () => {
     const entries = [
       { id: '1', category: 'liked', votes: 2, timestamp: { seconds: 100 } },
       { id: '2', category: 'liked', votes: 5, timestamp: { seconds: 110 } },
       { id: '3', category: 'lacked', votes: 3, timestamp: { seconds: 120 } },
     ];
     const winners = getCategoryWinners(entries);
-    expect(winners['liked'].id).toBe('2');
-    expect(winners['lacked'].id).toBe('3');
+    expect(winners['liked']).toEqual(['2']);
+    expect(winners['lacked']).toEqual(['3']);
   });
 
-  it('breaks ties using timestamp (FIFO)', () => {
+  it('includes all tied entries in the array', () => {
     const entries = [
       { id: '1', category: 'liked', votes: 5, timestamp: { seconds: 100 } },
-      { id: '2', category: 'liked', votes: 5, timestamp: { seconds: 90 } }, // Older wins
+      { id: '2', category: 'liked', votes: 5, timestamp: { seconds: 90 } }, // Tie
     ];
     const winners = getCategoryWinners(entries);
-    expect(winners['liked'].id).toBe('2');
+    expect(winners['liked']).toEqual(expect.arrayContaining(['1', '2']));
   });
 
   it('ignores entries with zero votes', () => {
@@ -59,11 +59,11 @@ describe('getCategoryWinners', () => {
       { id: 'cat1_v1', category: 'cat1', votes: 1, timestamp: { seconds: 10 } },
       { id: 'cat1_v2', category: 'cat1', votes: 2, timestamp: { seconds: 20 } },
       { id: 'cat2_v1', category: 'cat2', votes: 5, timestamp: { seconds: 30 } },
-      { id: 'cat2_v2', category: 'cat2', votes: 5, timestamp: { seconds: 25 } }, // Winner for cat2 (FIFO)
+      { id: 'cat2_v2', category: 'cat2', votes: 5, timestamp: { seconds: 25 } }, 
     ];
     const winners = getCategoryWinners(entries);
-    expect(winners['cat1'].id).toBe('cat1_v2');
-    expect(winners['cat2'].id).toBe('cat2_v2');
+    expect(winners['cat1']).toEqual(['cat1_v2']);
+    expect(winners['cat2']).toEqual(expect.arrayContaining(['cat2_v1', 'cat2_v2']));
   });
 
   it('handles entries with undefined votes and timestamps gracefully', () => {
@@ -73,8 +73,7 @@ describe('getCategoryWinners', () => {
       { id: 'v3', category: 'liked', votes: 1, timestamp: { seconds: 50 } }, // defined
     ];
     const winners = getCategoryWinners(entries);
-    // Since v2 has no timestamp (Infinity), v3 wins the tie breaker (50 < Infinity)
-    expect(winners['liked'].id).toBe('v3');
+    expect(winners['liked']).toEqual(expect.arrayContaining(['v2', 'v3']));
   });
 });
 

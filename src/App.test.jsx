@@ -14,7 +14,7 @@ vi.mock('./logic', async (importOriginal) => {
   return {
     ...actual,
     getWinner: vi.fn(() => ({ id: 'e1' })),
-    getCategoryWinners: vi.fn(() => ({ liked: { id: 'e1' } })),
+    getCategoryWinners: vi.fn(() => ({ liked: ['e1'] })),
   };
 });
 

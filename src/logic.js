@@ -32,16 +32,17 @@ export function filterEntries(allEntries, focusId) {
  */
 export function getWinner(entries) {
   if (!entries || !entries.length) return null;
-  const winners = getCategoryWinners(entries);
-  // Returns the single winner (if only one category) or the overall top winner
-  const allWinners = Object.values(winners);
-  if (allWinners.length === 0) return null;
   
-  // Sort all winners to find the ultimate one
-  return allWinners.sort((a, b) => {
+  const withVotes = entries.filter(e => (e.votes ?? 0) > 0);
+  if (withVotes.length === 0) return null;
+  
+  // Sort all entries to find the ultimate one (max votes, then FIFO)
+  return withVotes.sort((a, b) => {
     const voteDiff = (b.votes ?? 0) - (a.votes ?? 0);
     if (voteDiff !== 0) return voteDiff;
-    return (a.timestamp?.seconds ?? 0) - (b.timestamp?.seconds ?? 0);
+    const timeA = a.timestamp?.seconds ?? Infinity;
+    const timeB = b.timestamp?.seconds ?? Infinity;
+    return timeA - timeB;
   })[0];
 }
 
@@ -59,17 +60,11 @@ export function getCategoryWinners(entries) {
     const catEntries = entries.filter(e => e.category === catId && (e.votes ?? 0) > 0);
     if (catEntries.length === 0) return;
     
-    // Sort by votes (desc) then timestamp (asc)
-    const sorted = catEntries.sort((a, b) => {
-      const voteDiff = (b.votes ?? 0) - (a.votes ?? 0);
-      if (voteDiff !== 0) return voteDiff;
-      // Tie-breaker: earlier timestamp wins
-      const timeA = a.timestamp?.seconds ?? Infinity;
-      const timeB = b.timestamp?.seconds ?? Infinity;
-      return timeA - timeB;
-    });
+    // Find highest vote count
+    const maxVotes = Math.max(...catEntries.map(e => e.votes ?? 0));
     
-    winnersMap[catId] = sorted[0];
+    // The instruction required an array of all IDs that have maxVotes
+    winnersMap[catId] = catEntries.filter(e => (e.votes ?? 0) === maxVotes).map(e => e.id);
   });
   
   return winnersMap;

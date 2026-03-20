@@ -105,7 +105,7 @@ describe('BoardView', () => {
   ];
 
   it('renders Phase 1 with categories', () => {
-    const categoryWinners = { liked: { id: '1' } };
+    const categoryWinners = { liked: ['1'] };
     render(<BoardView currentPhase={1} entries={entries} categoryWinners={categoryWinners} onDrill={vi.fn()} />);
     expect(screen.getByText('Liked Entry')).toBeTruthy();
   });
