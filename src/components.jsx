@@ -1,3 +1,4 @@
+// @refresh reset
 import React, { useRef } from 'react';
 import html2canvas from 'html2canvas';
 import { ThumbsUp, Trophy, Search, Lightbulb, CheckSquare, ClipboardList, Settings, Activity, History, LayoutList, Clock, User } from 'lucide-react';
