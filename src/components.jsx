@@ -452,7 +452,7 @@ export function GenesisTable({ session, updateActionItem, isHost }) {
         <div className="px-12 py-10 bg-slate-50/50 border-b flex justify-between items-center">
           <div>
             <h2 className="font-black text-2xl tracking-tighter text-slate-800">Genesis Evolution Matrix</h2>
-            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mt-1">Cross-Functional Strategy Tracking</p>
+            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mt-1">TEAM COMMITMENT TRACKER</p>
           </div>
           <div className="flex gap-3 bg-white p-2 rounded-full shadow-inner border border-slate-200">
             {['All', 'Pending', 'Done'].map(tab => (
