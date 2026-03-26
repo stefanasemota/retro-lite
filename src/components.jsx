@@ -428,15 +428,36 @@ export function GenesisTable({ session, updateActionItem, isHost, onExportPNG })
   const handleExportPNG = async () => {
     if (!matrixRef.current) return;
     try {
-      const canvas = await html2canvas(matrixRef.current, { scale: 2, useCORS: true });
-      const link = document.createElement('a');
-      link.download = `retro-Lite_Actions_${new Date().toISOString().split('T')[0]}.png`;
-      link.href = canvas.toDataURL('image/png');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const canvas = await html2canvas(matrixRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+      });
+      const filename = `retro-Lite_Actions_${new Date().toISOString().split('T')[0]}.png`;
+      if (typeof canvas.toBlob === 'function') {
+        canvas.toBlob((blob) => {
+          if (!blob) { alert('Export fehlgeschlagen: Canvas war leer.'); return; }
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = filename;
+          link.href = url;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      } else {
+        // Fallback for environments without toBlob
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     } catch (err) {
       console.error('[retro-Lite] PNG export failed:', err);
+      alert(`Export fehlgeschlagen: ${err.message}`);
     }
   };
 

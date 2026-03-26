@@ -13,6 +13,7 @@ import React from 'react';
 vi.mock('html2canvas', () => ({
   default: vi.fn().mockResolvedValue({
     toDataURL: vi.fn(() => 'data:image/png;base64,ABC'),
+    toBlob: vi.fn((cb) => cb(new Blob(['fake'], { type: 'image/png' }))),
   }),
 }));
 

@@ -5,7 +5,9 @@ import { CATEGORIES, getWinner, getCategoryWinners, buildActionItem, formatDate 
 import { PHASES, BoardView, ContextSidebar, AdminControlTower, ContextHeader, GenesisTable } from './components';
 
 // ── Retro History List (Admin Panel) ────────────────────────────────────────
-function RetroHistoryList({ history, onView, onDelete }) {
+function RetroHistoryList({ history, onView, onDelete, onFetch }) {
+  useEffect(() => { onFetch?.(); }, []);
+
   if (!history || history.length === 0) {
     return (
       <p className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-widest py-4">
@@ -304,6 +306,7 @@ export default function App() {
                     history={store.history}
                     onView={store.viewSession}
                     onDelete={store.deleteSession}
+                    onFetch={store.fetchRetroHistory}
                   />
                 </>
               ) : (
