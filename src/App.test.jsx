@@ -198,4 +198,103 @@ describe('App', () => {
     // After the finally block, the button should not be stuck in "creating" state
     expect(screen.queryByText('Erstelle Session…')).toBeNull();
   });
+
+  it('modal can be opened by host-session-button', () => {
+    useRetroStoreModule.useRetroStore.mockReturnValue({
+      loading: false, view: 'landing', session: null,
+      user: { uid: 'u1', isAnonymous: false }, drillPath: [],
+      createSession: vi.fn(), clearError: vi.fn(), error: null,
+      history: [], fetchRetroHistory: vi.fn(),
+    });
+    render(<App />);
+    fireEvent.click(screen.getByTestId('host-session-button'));
+    // Modal opened — session-name-input is visible
+    expect(screen.getByTestId('session-name-input')).toBeTruthy();
+    expect(screen.getByTestId('btn-create-session')).toBeTruthy();
+  });
+
+  it('triggers completeRetro and exportActionsToCSV when "Retro abschließen" is clicked in Phase 4', () => {
+    const completeRetro = vi.fn();
+    const exportActionsToCSV = vi.fn();
+    useRetroStoreModule.useRetroStore.mockReturnValue({
+      loading: false, view: 'session', currentPhase: 4,
+      session: { sessionId: '123', sessionActionItems: [] },
+      displayEntries: [], allEntries: [], drillPath: [],
+      user: { uid: 'host', isAnonymous: false }, isHost: true,
+      error: null, sessionId: '123',
+      updateActionItem: vi.fn(), exportActionsToCSV, completeRetro,
+      clearError: vi.fn(), toggleBlur: vi.fn(), leaveSession: vi.fn(),
+      history: [], fetchRetroHistory: vi.fn(), viewSession: vi.fn(),
+      deleteSession: vi.fn(),
+    });
+    render(<App />);
+    const btn = screen.getByText('Retro abschließen');
+    fireEvent.click(btn);
+    expect(exportActionsToCSV).toHaveBeenCalled();
+    expect(completeRetro).toHaveBeenCalled();
+  });
+
+  it('calls joinSession when GO button is clicked', () => {
+    const joinSession = vi.fn();
+    useRetroStoreModule.useRetroStore.mockReturnValue({
+      loading: false, view: 'landing', session: null,
+      user: null, drillPath: [], joinSession,
+      loginAdmin: vi.fn(), clearError: vi.fn(), error: null,
+    });
+    render(<App />);
+    const input = screen.getByTestId('join-code-input');
+    fireEvent.change(input, { target: { value: 'ABC123' } });
+    fireEvent.click(screen.getByTestId('btn-join-session'));
+    expect(joinSession).toHaveBeenCalled();
+  });
+
+  it('renders the "Zurück zu 4L" button when inDrill=true and isHost', () => {
+    const setDrillPhase = vi.fn();
+    useRetroStoreModule.useRetroStore.mockReturnValue({
+      loading: false, view: 'session', currentPhase: 2,
+      session: { sessionId: '123', sessionActionItems: [], navigationHistory: [] },
+      displayEntries: [], allEntries: [],
+      drillPath: [{ id: 'd1', phase: 2, parentText: 'Something', parentId: 'd1' }],
+      user: { uid: 'host', isAnonymous: false }, isHost: true,
+      focusId: 'd1', error: null, sessionId: '123',
+      toggleVote: vi.fn(), toggleBlur: vi.fn(), setDrillPhase,
+      leaveSession: vi.fn(), clearError: vi.fn(),
+      exportActionsToCSV: vi.fn(), completeRetro: vi.fn(),
+      history: [], fetchRetroHistory: vi.fn(), viewSession: vi.fn(),
+      deleteSession: vi.fn(),
+    });
+    render(<App />);
+    const backBtn = screen.getByText('Zurück zu 4L');
+    expect(backBtn).toBeTruthy();
+    fireEvent.click(backBtn);
+    expect(setDrillPhase).toHaveBeenCalledWith(1, null, []);
+  });
+
+  it('renders RetroHistoryList with sessions when admin is logged in and history is populated', () => {
+    const viewSession = vi.fn();
+    const deleteSession = vi.fn();
+    useRetroStoreModule.useRetroStore.mockReturnValue({
+      loading: false, view: 'landing', session: null,
+      user: { uid: 'admin', isAnonymous: false },
+      drillPath: [], loginAdmin: vi.fn(), clearError: vi.fn(), error: null,
+      history: [
+        { id: 'S1', sessionName: 'Sprint March 20', createdAt: { toDate: () => new Date('2026-03-20') } },
+        { id: 'S2', sessionName: 'Sprint March 1',  createdAt: { toDate: () => new Date('2026-03-01') } },
+      ],
+      fetchRetroHistory: vi.fn(), viewSession, deleteSession,
+      createSession: vi.fn(),
+    });
+    render(<App />);
+    expect(screen.getByText('Sprint March 20')).toBeTruthy();
+    expect(screen.getByText('Sprint March 1')).toBeTruthy();
+    // Test View button
+    fireEvent.click(screen.getByTestId('view-session-S1'));
+    expect(viewSession).toHaveBeenCalledWith('S1');
+    // Test Delete triggers confirm modal
+    fireEvent.click(screen.getByTestId('delete-session-S2'));
+    expect(screen.getByText('Session löschen?')).toBeTruthy();
+    // Confirm delete
+    fireEvent.click(screen.getByTestId('confirm-delete-btn'));
+    expect(deleteSession).toHaveBeenCalledWith('S2');
+  });
 });

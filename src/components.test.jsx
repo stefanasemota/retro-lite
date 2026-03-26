@@ -170,6 +170,53 @@ describe('AdminControlTower', () => {
     fireEvent.click(histBtn);
     expect(mockStore.jumpToHistory).toHaveBeenCalledWith(mockStore.session.navigationHistory[0]);
   });
+});
 
+// ── GenesisTable — action item field interaction ──────────────────────────────
+describe('GenesisTable action item fields', () => {
+  const updateActionItem = vi.fn();
+  const sessionWithItem = {
+    sessionActionItems: [{
+      id: 'a1', originalWhat: 'Fix deploys', what: 'Fix CI', who: 'To be assigned',
+      when: '2026-04-01', done: false, sourceAnchorText: 'Speed', categoryId: 'liked',
+    }]
+  };
 
+  beforeEach(() => { vi.clearAllMocks(); });
+
+  it('calls updateActionItem when textarea (Konkrete Maßnahme) changes', () => {
+    render(<GenesisTable session={sessionWithItem} updateActionItem={updateActionItem} isHost={true} />);
+    const textarea = screen.getByPlaceholderText('Erfasse die konkrete Massnahme...');
+    fireEvent.change(textarea, { target: { value: 'Neuer Wert' } });
+    expect(updateActionItem).toHaveBeenCalledWith('a1', { what: 'Neuer Wert' });
+  });
+
+  it('calls updateActionItem when date input changes', () => {
+    render(<GenesisTable session={sessionWithItem} updateActionItem={updateActionItem} isHost={true} />);
+    const dateInput = screen.getByDisplayValue('2026-04-01');
+    fireEvent.change(dateInput, { target: { value: '2026-05-01' } });
+    expect(updateActionItem).toHaveBeenCalledWith('a1', { when: '2026-05-01' });
+  });
+
+  it('calls updateActionItem with TBD when date input is cleared', () => {
+    render(<GenesisTable session={sessionWithItem} updateActionItem={updateActionItem} isHost={true} />);
+    const dateInput = screen.getByDisplayValue('2026-04-01');
+    fireEvent.change(dateInput, { target: { value: '' } });
+    expect(updateActionItem).toHaveBeenCalledWith('a1', { when: 'TBD' });
+  });
+
+  it('calls updateActionItem when assignee input changes', () => {
+    render(<GenesisTable session={sessionWithItem} updateActionItem={updateActionItem} isHost={true} />);
+    const assigneeInput = screen.getByPlaceholderText('Assignee...');
+    fireEvent.change(assigneeInput, { target: { value: 'Bob' } });
+    expect(updateActionItem).toHaveBeenCalledWith('a1', { who: 'Bob' });
+  });
+
+  it('calls updateActionItem with "To be assigned" when assignee is cleared', () => {
+    const session = { sessionActionItems: [{ ...sessionWithItem.sessionActionItems[0], who: 'Alice' }] };
+    render(<GenesisTable session={session} updateActionItem={updateActionItem} isHost={true} />);
+    const assigneeInput = screen.getByPlaceholderText('Assignee...');
+    fireEvent.change(assigneeInput, { target: { value: '' } });
+    expect(updateActionItem).toHaveBeenCalledWith('a1', { who: 'To be assigned' });
+  });
 });

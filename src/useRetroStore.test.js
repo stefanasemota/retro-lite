@@ -31,6 +31,11 @@ vi.mock('firebase/firestore', () => {
     getDoc: vi.fn().mockResolvedValue({ exists: () => true, data: () => ({ id: '123', hostId: 'test-admin' }) }),
     updateDoc: vi.fn().mockResolvedValue(),
     addDoc: vi.fn().mockResolvedValue(),
+    deleteDoc: vi.fn().mockResolvedValue(),
+    getDocs: vi.fn().mockResolvedValue({ docs: [] }),
+    query: vi.fn((...args) => args.join('|')),
+    where: vi.fn(() => 'where'),
+    orderBy: vi.fn(() => 'orderBy'),
     onSnapshot: vi.fn((ref, onNext) => {
       if (ref.includes('entries')) {
         onNext({ docs: [{ id: 'e1', data: () => ({ text: 'entry1', category: 'liked' }) }] });
@@ -628,5 +633,62 @@ describe('useRetroStore', () => {
     await vi.waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.user.email).toBe('michael.part@lst.de');
     expect(result.current.user.uid).not.toBe('test-admin');
+  });
+});
+
+// ── fetchRetroHistory ─────────────────────────────────────────────────────────
+describe('fetchRetroHistory', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'location', { value: { search: '' }, writable: true });
+    vi.clearAllMocks();
+  });
+
+  it('sets history to [] when Firestore returns no completed sessions', async () => {
+    const { getDocs } = await import('firebase/firestore');
+    getDocs.mockResolvedValueOnce({ docs: [] });
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.fetchRetroHistory(); });
+    expect(result.current.history).toEqual([]);
+  });
+
+  it('sets history to 5 items when Firestore returns 5 completed sessions', async () => {
+    const { getDocs } = await import('firebase/firestore');
+    const fiveDocs = Array.from({ length: 5 }, (_, i) => ({
+      id: `S${i}`,
+      data: () => ({ sessionName: `Sprint ${i}`, isCompleted: true, createdAt: { toDate: () => new Date() } }),
+    }));
+    getDocs.mockResolvedValueOnce({ docs: fiveDocs });
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.fetchRetroHistory(); });
+    expect(result.current.history).toHaveLength(5);
+    expect(result.current.history[0].id).toBe('S0');
+  });
+
+  it('deleteSession removes item from local history optimistically before Firestore responds', async () => {
+    const { getDocs, onSnapshot } = await import('firebase/firestore');
+    onSnapshot.mockImplementation((ref, onNext) => {
+      onNext(ref.includes('entries')
+        ? { docs: [] }
+        : { exists: () => true, data: () => ({ id: '123', hostId: 'test-admin', currentPhase: 1, drillPath: [] }) }
+      );
+      return vi.fn();
+    });
+    getDocs.mockResolvedValueOnce({
+      docs: [
+        { id: 'X1', data: () => ({ sessionName: 'Old Retro', isCompleted: true }) },
+        { id: 'X2', data: () => ({ sessionName: 'New Retro', isCompleted: true }) },
+      ],
+    });
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.joinSession('123'); });
+    await act(async () => { await result.current.fetchRetroHistory(); });
+    expect(result.current.history).toHaveLength(2);
+    // Now delete one — optimistic update should happen immediately
+    await act(async () => { await result.current.deleteSession('X1'); });
+    expect(result.current.history.find(s => s.id === 'X1')).toBeUndefined();
+    expect(result.current.history).toHaveLength(1);
   });
 });
