@@ -3,6 +3,14 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import App from './App';
 import * as useRetroStoreModule from './useRetroStore';
 
+// Mock react-toastify so tests don't depend on its DOM structure
+vi.mock('react-toastify', () => ({
+  ToastContainer: ({ position }) => (
+    <div data-testid="toast-container" data-position={position} className={`Toastify__toast-container--${position.replace('_', '-')}`} />
+  ),
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
+
 // Mock the store hook
 vi.mock('./useRetroStore', () => ({
   useRetroStore: vi.fn()
@@ -19,6 +27,20 @@ vi.mock('./logic', async (importOriginal) => {
 });
 
 describe('App', () => {
+  it('renders a ToastContainer with position top-center class', () => {
+    useRetroStoreModule.useRetroStore.mockReturnValue({
+      loading: false, view: 'session', currentPhase: 1,
+      session: { sessionId: '123', sessionActionItems: [] },
+      displayEntries: [], allEntries: [], drillPath: [],
+      user: { uid: 'host', isAnonymous: false }, isHost: true,
+      error: null, clearError: vi.fn(), toggleBlur: vi.fn(),
+      leaveSession: vi.fn(), history: [], fetchRetroHistory: vi.fn(),
+    });
+    render(<App />);
+    const container = document.querySelector('.Toastify__toast-container--top-center');
+    expect(container).not.toBeNull();
+  });
+
   it('renders loading state when store is loaded', () => {
     useRetroStoreModule.useRetroStore.mockReturnValue({ loading: true });
     render(<App />);

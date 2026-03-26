@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, LogOut, Send, ShieldCheck, Eye, EyeOff, AlertCircle, ChevronLeft, X, Sparkles, CheckSquare } from 'lucide-react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useRetroStore } from './useRetroStore';
 import { CATEGORIES, getWinner, getCategoryWinners, buildActionItem, formatDate } from './logic';
 import { PHASES, BoardView, ContextSidebar, AdminControlTower, ContextHeader, GenesisTable } from './components';
@@ -140,6 +142,13 @@ export default function App() {
 
   return (
     <div className={`min-h-screen ${phase.bg} text-slate-900 font-sans pb-24 transition-colors duration-500`}>
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        closeOnClick
+        pauseOnHover
+        theme="light"
+      />
 
       {/* ── Modal ── */}
       {showNameModal && (

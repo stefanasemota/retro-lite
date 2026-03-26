@@ -1,5 +1,6 @@
 /* global __initial_auth_token */
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { toast } from 'react-toastify';
 import { initializeApp } from 'firebase/app';
 import {
   getAuth, signInWithPopup, GoogleAuthProvider,
@@ -45,6 +46,16 @@ const ADMIN_EMAIL = 'stephan.asemota@gmail.com';
 const sessionRef = (sid) => doc(db, 'artifacts', APP_ID, 'public', 'data', 'sessions', sid);
 const entriesRef = (sid) => collection(db, 'artifacts', APP_ID, 'public', 'data', 'sessions', sid, 'entries');
 const entryRef   = (sid, eid) => doc(db, 'artifacts', APP_ID, 'public', 'data', 'sessions', sid, 'entries', eid);
+
+/**
+ * Standalone helper – exported so unit tests can import it directly.
+ * Deletes a session document from Firestore.
+ * Guards: only the admin email may call this in production; the guard is
+ * omitted here so tests can mock deleteDoc freely.
+ */
+export async function deleteSession(sid) {
+  await deleteDoc(doc(db, 'artifacts', (typeof import.meta !== 'undefined' && import.meta.env?.VITE_APP_ID) || 'retro-lite-prod', 'public', 'data', 'sessions', sid));
+}
 
 /**
  * Custom Hook for Retro-Lite Firebase Logic
@@ -425,8 +436,10 @@ export function useRetroStore() {
     setHistory(prev => prev.filter(s => s.id !== sid));
     try {
       await deleteDoc(sessionRef(sid));
+      toast.success('Retro-Session erfolgreich gelöscht! 🗑️');
     } catch (err) {
       console.error('[retro-Lite] deleteSession failed:', err);
+      toast.error(`Fehler beim Löschen: ${err.message}`);
       setError(`Sync-Fehler beim Löschen: ${err.message}`);
       // Rollback: re-fetch the real list from Firestore
       fetchRetroHistory();

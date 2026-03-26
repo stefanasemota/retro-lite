@@ -1,5 +1,6 @@
 // @refresh reset
 import React, { useRef } from 'react';
+import { toast } from 'react-toastify';
 import html2canvas from 'html2canvas';
 import { ThumbsUp, Trophy, Search, Lightbulb, CheckSquare, ClipboardList, Settings, Activity, History, LayoutList, Clock, User } from 'lucide-react';
 
@@ -422,14 +423,8 @@ export function AdminControlTower({ store }) {
 }
 
 // ── Genesis Table (Phase 4 Dashboard) ───────────────────────────────────────
-export function GenesisTable({ session, updateActionItem, isHost, onExportPNG }) {
+export function GenesisTable({ session, updateActionItem, isHost }) {
   const matrixRef = useRef(null);
-  const [toastMsg, setToastMsg] = React.useState(null);
-
-  const showToast = (msg, isError = true) => {
-    setToastMsg({ msg, isError });
-    setTimeout(() => setToastMsg(null), 4000);
-  };
 
   const handleExportPNG = async () => {
     if (!matrixRef.current) return;
@@ -453,7 +448,7 @@ export function GenesisTable({ session, updateActionItem, isHost, onExportPNG })
       const filename = `retro-Lite_Actions_${new Date().toISOString().split('T')[0]}.png`;
       if (typeof canvas.toBlob === 'function') {
         canvas.toBlob((blob) => {
-          if (!blob) { showToast('Export fehlgeschlagen: Canvas war leer.'); return; }
+          if (!blob) { toast.error('Export fehlgeschlagen: Canvas war leer.'); return; }
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.download = filename;
@@ -462,7 +457,7 @@ export function GenesisTable({ session, updateActionItem, isHost, onExportPNG })
           link.click();
           document.body.removeChild(link);
           URL.revokeObjectURL(url);
-          showToast('PNG erfolgreich exportiert ✓', false);
+          toast.success('PNG erfolgreich exportiert ✓');
         }, 'image/png');
       } else {
         const link = document.createElement('a');
@@ -471,11 +466,11 @@ export function GenesisTable({ session, updateActionItem, isHost, onExportPNG })
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showToast('PNG erfolgreich exportiert ✓', false);
+        toast.success('PNG erfolgreich exportiert ✓');
       }
     } catch (err) {
       console.error('[retro-Lite] PNG export failed:', err);
-      showToast(`Export fehlgeschlagen: ${err.message}`);
+      toast.error(`Export fehlgeschlagen: ${err.message}`);
     }
   };
 
@@ -485,13 +480,6 @@ export function GenesisTable({ session, updateActionItem, isHost, onExportPNG })
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-      {/* Toast Notification */}
-      {toastMsg && (
-        <div className={`fixed bottom-28 right-6 z-[200] px-6 py-4 rounded-2xl shadow-2xl text-[12px] font-black uppercase tracking-widest text-white flex items-center gap-3 transition-all animate-in fade-in slide-in-from-bottom-4 duration-300 ${toastMsg.isError ? 'bg-red-600' : 'bg-emerald-600'}`}>
-          <span>{toastMsg.isError ? '✕' : '✓'}</span>
-          <span>{toastMsg.msg}</span>
-        </div>
-      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 flex items-center gap-6 group hover:scale-[1.02] transition-transform">
           <div className="p-5 bg-rose-50 text-rose-600 rounded-3xl group-hover:rotate-12 transition-transform"><LayoutList className="w-8 h-8"/></div>
