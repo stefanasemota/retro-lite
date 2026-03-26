@@ -1,10 +1,10 @@
-# 📖 LST Retro-Lite: Standard Operating Procedure (SOP)
+# 📖 retro-Lite: Standard Operating Procedure (SOP)
 
 ![Workflow](https://img.shields.io/badge/Workflow-4--Phasen--Modell-blue?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Industry--Standard-success?style=for-the-badge)
 ![Role](https://img.shields.io/badge/Role-Moderator--Manual-indigo?style=for-the-badge)
 
-Dieses Dokument dient als technisches Regelwerk und **Standard Operating Procedure (SOP)** für LST Retrospektiven. Es beschreibt den hybriden Workflow zwischen dem Moderator (Host) und dem Team (Teilnehmer) in der `retro-lite-v2` Umgebung.
+Dieses Dokument dient als technisches Regelwerk und **Standard Operating Procedure (SOP)** für retro-Lite Retrospektiven. Es beschreibt den hybriden Workflow zwischen dem Moderator (Host) und dem Team (Teilnehmer) in der `retro-lite-v2` Umgebung.
 
 ---
 

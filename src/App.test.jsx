@@ -22,7 +22,7 @@ describe('App', () => {
   it('renders loading state when store is loaded', () => {
     useRetroStoreModule.useRetroStore.mockReturnValue({ loading: true });
     render(<App />);
-    expect(screen.getByText('LST Engine startet…')).toBeTruthy();
+    expect(screen.getByText('retro-Lite Engine startet…')).toBeTruthy();
   });
 
   it('renders main landing view when not in a session', () => {

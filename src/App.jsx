@@ -67,7 +67,7 @@ export default function App() {
 
   // ── Render ───────────────────────────────────────────────────────────────
   if (store.loading) {
-    return <div className="h-screen flex items-center justify-center bg-indigo-50 text-indigo-600 font-bold">LST Engine startet…</div>;
+    return <div className="h-screen flex items-center justify-center bg-indigo-50 text-indigo-600 font-bold">retro-Lite Engine startet…</div>;
   }
 
   return (
@@ -252,9 +252,9 @@ export default function App() {
                   </button>
                 </div>
               </div>
-              <div className="relative py-4"><div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200"/></div><div className="relative flex justify-center text-[11px] font-black uppercase tracking-widest text-slate-400"><span className="bg-slate-50 px-6">Scrum Master Area</span></div></div>
+              <div className="relative py-4"><div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200"/></div><div className="relative flex justify-center text-[11px] font-black uppercase tracking-widest text-slate-400"><span className="bg-slate-50 px-6">Admin Area</span></div></div>
               {store.user && !store.user.isAnonymous ? (
-                <button data-testid="host-session-button" onClick={() => { setSessionName(`LST Retro ${new Date().toLocaleDateString('de-DE')}`); setShowNameModal(true); }} className="w-full bg-white border-2 border-indigo-600 text-indigo-600 py-6 rounded-[2.5rem] font-black hover:bg-indigo-50 transition-all flex items-center justify-center gap-4 shadow-xl shadow-indigo-50"><Plus className="w-7 h-7"/> Neue Session hosten</button>
+                <button data-testid="host-session-button" onClick={() => { setSessionName(`retro-Lite ${new Date().toLocaleDateString('de-DE')}`); setShowNameModal(true); }} className="w-full bg-white border-2 border-indigo-600 text-indigo-600 py-6 rounded-[2.5rem] font-black hover:bg-indigo-50 transition-all flex items-center justify-center gap-4 shadow-xl shadow-indigo-50"><Plus className="w-7 h-7"/> Neue Session hosten</button>
               ) : (
                 <button onClick={store.loginAdmin} className="w-full bg-slate-900 text-white py-6 rounded-[2.5rem] font-black shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-transform"><ShieldCheck className="w-7 h-7 text-indigo-400"/> Admin Login</button>
               )}

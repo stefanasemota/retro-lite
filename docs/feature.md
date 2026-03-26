@@ -1,4 +1,4 @@
-# 🚀 Feature-Dokumentation: LST Retro-Lite
+# 🚀 Feature-Dokumentation: retro-Lite
 
 ![Build Info](https://img.shields.io/badge/Stack-React--Vite--Firebase-orange?style=for-the-badge)
 ![UI Design](https://img.shields.io/badge/Design-Boutique--UX-navy?style=for-the-badge)
