@@ -421,12 +421,15 @@ export function useRetroStore() {
 
   const deleteSession = async (sid) => {
     if (!user || user.email !== ADMIN_EMAIL) return;
+    // Optimistic update: remove from UI immediately
+    setHistory(prev => prev.filter(s => s.id !== sid));
     try {
       await deleteDoc(sessionRef(sid));
-      setHistory(prev => prev.filter(s => s.id !== sid));
     } catch (err) {
       console.error('[retro-Lite] deleteSession failed:', err);
-      setError(`Sync-Fehler: ${err.message}`);
+      setError(`Sync-Fehler beim Löschen: ${err.message}`);
+      // Rollback: re-fetch the real list from Firestore
+      fetchRetroHistory();
     }
   };
 
