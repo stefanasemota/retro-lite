@@ -180,14 +180,6 @@ export default function App() {
                   <div className={`w-2 h-2 rounded-full ${phase.accent} animate-pulse`} />
                   ● PHASE {phase.id}: {phase.label}
                 </div>
-                {store.currentPhase === 4 && store.isHost && (
-                  <button 
-                    onClick={() => { store.exportActionsToCSV(); store.completeRetro(); }}
-                    className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-full text-[10px] uppercase font-black tracking-widest transition-all shadow-md shadow-emerald-900/20 active:scale-95 animate-in fade-in duration-500"
-                  >
-                    <CheckSquare className="w-3.5 h-3.5" /> Retro abschließen
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -347,7 +339,7 @@ export default function App() {
           ) : (
             <div className="space-y-12 w-full">
               {store.view === 'summary' || store.currentPhase === 4 ? (
-                <GenesisTable session={store.session} updateActionItem={store.updateActionItem} isHost={store.isHost} />
+                <GenesisTable session={store.session} updateActionItem={store.updateActionItem} isHost={store.isHost} onComplete={() => { store.exportActionsToCSV(); store.completeRetro(); }} />
               ) : (
                 <>
                   {/* Board Feed */}
@@ -385,7 +377,7 @@ export default function App() {
           <div className="flex items-center gap-4 ml-1"><div className="relative"><div className="w-3 h-3 bg-green-400 rounded-full shadow-[0_0_15px_rgba(74,222,128,0.5)]"/><div className="absolute inset-0 animate-ping w-3 h-3 bg-green-400 rounded-full opacity-75"/></div><span className="text-[12px] font-black uppercase tracking-[0.3em] opacity-80 text-white flex items-center gap-2">Live <span className="opacity-30">|</span> Collaboration</span></div>
           <div className="flex items-center gap-4">
             {inDrill && store.isHost && <button onClick={() => store.setDrillPhase(1, null, [])} className="text-[12px] font-black bg-indigo-500/30 hover:bg-indigo-500/50 px-6 py-3 rounded-full flex items-center gap-2 transition-all border border-indigo-400/20"><ChevronLeft className="w-4 h-4"/> Zurück zu 4L</button>}
-            <button onClick={store.leaveSession} className="text-[12px] font-black bg-red-600 hover:bg-red-700 px-8 py-3 rounded-full tracking-[0.2em] transition-all shadow-lg shadow-red-900/40 border border-red-500/20 uppercase">Beenden</button>
+            <button onClick={store.leaveSession} className="text-[12px] font-black bg-red-600 hover:bg-red-700 px-8 py-3 rounded-full tracking-[0.2em] transition-all shadow-lg shadow-red-900/40 border border-red-500/20 uppercase">Session verlassen</button>
           </div>
         </div>
       )}

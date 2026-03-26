@@ -423,7 +423,7 @@ export function AdminControlTower({ store }) {
 }
 
 // ── Genesis Table (Phase 4 Dashboard) ───────────────────────────────────────
-export function GenesisTable({ session, updateActionItem, isHost }) {
+export function GenesisTable({ session, updateActionItem, isHost, onComplete }) {
   const matrixRef = useRef(null);
 
   const handleExportPNG = async () => {
@@ -506,6 +506,14 @@ export function GenesisTable({ session, updateActionItem, isHost }) {
             <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mt-1">TEAM COMMITMENT TRACKER</p>
           </div>
           <div className="flex items-center gap-4">
+            {isHost && onComplete && (
+              <button 
+                onClick={onComplete}
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-full text-[11px] uppercase font-black tracking-widest transition-all shadow-md shadow-emerald-900/20 active:scale-95 animate-in fade-in duration-500"
+              >
+                <CheckSquare className="w-3.5 h-3.5" /> Retro abschließen
+              </button>
+            )}
             <button
               onClick={handleExportPNG}
               className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-500 bg-white border border-slate-200 px-5 py-2.5 rounded-full hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all shadow-sm"
