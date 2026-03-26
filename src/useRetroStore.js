@@ -420,7 +420,7 @@ export function useRetroStore() {
   };
 
   const deleteSession = async (sid) => {
-    if (!isHost) return;
+    if (!user || user.email !== ADMIN_EMAIL) return;
     try {
       await deleteDoc(sessionRef(sid));
       setHistory(prev => prev.filter(s => s.id !== sid));

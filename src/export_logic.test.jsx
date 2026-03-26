@@ -60,10 +60,15 @@ describe('GenesisTable PNG Export', () => {
   });
 
   it('calls html2canvas with the matrix DOM element when Export as PNG is clicked', async () => {
+    vi.useFakeTimers();
     const { default: html2canvas } = await import('html2canvas');
     render(<App />);
     const btn = screen.getByTitle('Export Matrix as PNG');
-    await act(async () => { fireEvent.click(btn); });
+    await act(async () => {
+      fireEvent.click(btn);
+      await vi.runAllTimersAsync();
+    });
+    vi.useRealTimers();
     expect(html2canvas).toHaveBeenCalledTimes(1);
     expect(html2canvas.mock.calls[0][0]).toBeInstanceOf(HTMLElement);
   });

@@ -433,14 +433,22 @@ export function GenesisTable({ session, updateActionItem, isHost, onExportPNG })
 
   const handleExportPNG = async () => {
     if (!matrixRef.current) return;
-    // Clear any active text selection — html2canvas crashes on Range.setEnd
-    // when the selection spans a text node boundary.
-    window.getSelection()?.removeAllRanges();
     try {
+      // Wait one paint to ensure no pending DOM updates, then clear any selection
+      await new Promise(resolve =>
+        typeof requestAnimationFrame === 'function'
+          ? requestAnimationFrame(resolve)
+          : setTimeout(resolve, 0)
+      );
+      window.getSelection()?.removeAllRanges();
+
       const canvas = await html2canvas(matrixRef.current, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
+        // Skip textarea/input elements — html2canvas has a known Range.setEnd
+        // crash when measuring text nodes inside editable fields.
+        ignoreElements: (el) => el.tagName === 'TEXTAREA' || el.tagName === 'INPUT',
       });
       const filename = `retro-Lite_Actions_${new Date().toISOString().split('T')[0]}.png`;
       if (typeof canvas.toBlob === 'function') {

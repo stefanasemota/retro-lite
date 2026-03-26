@@ -7,6 +7,7 @@ import { PHASES, BoardView, ContextSidebar, AdminControlTower, ContextHeader, Ge
 // ── Retro History List (Admin Panel) ────────────────────────────────────────
 function RetroHistoryList({ history, onView, onDelete, onFetch }) {
   useEffect(() => { onFetch?.(); }, []);
+  const [confirmingDelete, setConfirmingDelete] = React.useState(null);
 
   if (!history || history.length === 0) {
     return (
@@ -17,6 +18,31 @@ function RetroHistoryList({ history, onView, onDelete, onFetch }) {
   }
   return (
     <div className="mt-4 bg-white border border-slate-100 rounded-[2rem] overflow-hidden shadow-sm">
+      {/* Delete confirmation modal */}
+      {confirmingDelete && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-6">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl p-10 max-w-sm w-full flex flex-col items-center gap-6">
+            <div className="p-4 bg-red-50 rounded-full">
+              <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </div>
+            <div className="text-center">
+              <h3 className="text-[18px] font-black text-slate-800 tracking-tighter">Session löschen?</h3>
+              <p className="text-[12px] text-slate-500 mt-2">Diese Aktion kann nicht rückgängig gemacht werden.</p>
+            </div>
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={() => setConfirmingDelete(null)}
+                className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase tracking-widest bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+              >Abbrechen</button>
+              <button
+                data-testid="confirm-delete-btn"
+                onClick={() => { onDelete(confirmingDelete); setConfirmingDelete(null); }}
+                className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase tracking-widest bg-red-600 text-white hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
+              >Ja, löschen</button>
+            </div>
+          </div>
+        </div>
+      )}
       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-6 py-4 border-b">
         retro-Lite Session History
       </p>
@@ -32,16 +58,12 @@ function RetroHistoryList({ history, onView, onDelete, onFetch }) {
                 data-testid={`view-session-${session.id}`}
                 onClick={() => onView(session.id)}
                 className="text-[11px] font-black px-4 py-2 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors uppercase tracking-widest"
-              >
-                View
-              </button>
+              >View</button>
               <button
                 data-testid={`delete-session-${session.id}`}
-                onClick={() => onDelete(session.id)}
+                onClick={() => setConfirmingDelete(session.id)}
                 className="text-[11px] font-black px-4 py-2 rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors uppercase tracking-widest"
-              >
-                Delete
-              </button>
+              >Delete</button>
             </div>
           </li>
         ))}
