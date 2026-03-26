@@ -36,6 +36,10 @@ try {
 
 const APP_ID = import.meta.env.VITE_APP_ID || 'retro-lite-prod';
 
+// ── Access Control ───────────────────────────────────────────────────────────
+// Only this Google account may act as session host / admin.
+const ADMIN_EMAIL = 'stephan.asemota@gmail.com';
+
 // Ref Helpers
 const sessionRef = (sid) => doc(db, 'artifacts', APP_ID, 'public', 'data', 'sessions', sid);
 const entriesRef = (sid) => collection(db, 'artifacts', APP_ID, 'public', 'data', 'sessions', sid, 'entries');
@@ -147,7 +151,9 @@ export function useRetroStore() {
   const currentPhase = session?.currentPhase || calculateCurrentPhase(session?.drillPath);
   const focusId      = session?.focusId ?? null;
   const drillPath    = session?.drillPath ?? [];
-  const isHost       = session?.hostId === user?.uid;
+  // isHost requires BOTH matching hostId AND the verified admin email.
+  // Defense-in-depth: even if a UID somehow matched, wrong email = no host powers.
+  const isHost       = session?.hostId === user?.uid && user?.email === ADMIN_EMAIL;
   const isCompleted  = session?.isCompleted ?? false;
   
   // Logic to determine view based on session state
@@ -166,8 +172,14 @@ export function useRetroStore() {
   // Actions
   const loginAdmin = async () => {
     setError(null);
-    try { await signInWithPopup(auth, new GoogleAuthProvider()); }
-    catch (err) {
+    try {
+      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      // Hard gate: only the designated admin account may log in.
+      if (result.user.email !== ADMIN_EMAIL) {
+        await auth.signOut();
+        setError(`❌ Zugriff verweigert: Nur der autorisierte Admin darf Sessions erstellen.\n(Eingeloggt als: ${result.user.email})`);
+      }
+    } catch (err) {
       if (err.code === 'auth/unauthorized-domain') {
         const pid = app?.options?.projectId ?? APP_ID;
         setError(`❌ Domain nicht erlaubt.\nhttps://console.firebase.google.com/project/${pid}/authentication/settings\n→ Add domain → localhost`);

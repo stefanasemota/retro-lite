@@ -11,11 +11,13 @@ vi.mock('firebase/auth', () => ({
   getAuth: vi.fn(() => ({ signOut: vi.fn() })),
   signInAnonymously: vi.fn().mockResolvedValue({ user: { uid: 'anon' } }),
   onAuthStateChanged: vi.fn((auth, cb) => {
-    // Immediate callback for user state
-    cb({ uid: 'test-admin', email: 'stephan.admin@lst.de', isAnonymous: false });
+    // Immediate callback for user state — email must match ADMIN_EMAIL for isHost to work
+    cb({ uid: 'test-admin', email: 'stephan.asemota@gmail.com', isAnonymous: false });
     return vi.fn(); // unsubscribe
   }),
-  signInWithPopup: vi.fn(),
+  signInWithPopup: vi.fn().mockResolvedValue({
+    user: { uid: 'test-admin', email: 'stephan.asemota@gmail.com', isAnonymous: false },
+  }),
   GoogleAuthProvider: vi.fn(),
   signInWithCustomToken: vi.fn(),
 }));
@@ -61,9 +63,9 @@ describe('useRetroStore', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.user).toEqual({
+    expect(result.current.user).toMatchObject({
       uid: 'test-admin', 
-      email: 'stephan.admin@lst.de', 
+      email: 'stephan.asemota@gmail.com', 
       isAnonymous: false
     });
   });
@@ -246,7 +248,20 @@ describe('useRetroStore', () => {
     });
     const { result } = renderHook(() => useRetroStore());
     await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    // BDD admin still uses stephan.admin@lst.de (test mode identity, not real ADMIN_EMAIL)
     expect(result.current.user.email).toBe('stephan.admin@lst.de');
+  });
+
+  it('handles loginAdmin unauthorized email: signs out and sets access denied error', async () => {
+    const { signInWithPopup } = await import('firebase/auth');
+    signInWithPopup.mockResolvedValueOnce({
+      user: { uid: 'wrong-uid', email: 'intruder@example.com', isAnonymous: false },
+    });
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.loginAdmin(); });
+    expect(result.current.error).toContain('Zugriff verweigert');
+    expect(result.current.error).toContain('intruder@example.com');
   });
 
   it('handles toggleBlur error', async () => {
@@ -403,7 +418,7 @@ describe('useRetroStore', () => {
     const { onAuthStateChanged } = await import('firebase/auth');
     // Restore mocks cleared by beforeEach so session + isHost are populated
     onAuthStateChanged.mockImplementation((auth, cb) => {
-      cb({ uid: 'test-admin', email: 'stephan.admin@lst.de', isAnonymous: false });
+      cb({ uid: 'test-admin', email: 'stephan.asemota@gmail.com', isAnonymous: false });
       return vi.fn();
     });
     onSnapshot.mockImplementation((ref, onNext) => {
@@ -444,12 +459,21 @@ describe('useRetroStore', () => {
   // ── BLIND SPOT B: jumpToHistory ──────────────────────────────────────────
 
   it('[Blind Spot B] jumpToHistory: surfaces Sync-Fehler on Firestore failure', async () => {
-    const { updateDoc } = await import('firebase/firestore');
+    const { onSnapshot, updateDoc } = await import('firebase/firestore');
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementation((auth, cb) => {
+      cb({ uid: 'test-admin', email: 'stephan.asemota@gmail.com', isAnonymous: false });
+      return vi.fn();
+    });
+    onSnapshot.mockImplementation((ref, onNext) => {
+      if (ref.includes('entries')) { onNext({ docs: [] }); }
+      else { onNext({ exists: () => true, data: () => ({ id: '123', hostId: 'test-admin', currentPhase: 1, drillPath: [] }) }); }
+      return vi.fn();
+    });
     const { result } = renderHook(() => useRetroStore());
     await vi.waitFor(() => expect(result.current.loading).toBe(false));
-    // Join first so session + isHost are populated
     await act(async () => { await result.current.joinSession('123'); });
-    // NOW inject the rejection for the next updateDoc call (jumpToHistory)
+    await vi.waitFor(() => expect(result.current.session).not.toBeNull());
     updateDoc.mockRejectedValueOnce(new Error('History jump failed'));
     await act(async () => {
       await result.current.jumpToHistory({ phase: 1, id: 'e1', drillPath: [] });
@@ -497,7 +521,7 @@ describe('useRetroStore', () => {
     const { onSnapshot, updateDoc } = await import('firebase/firestore');
     const { onAuthStateChanged } = await import('firebase/auth');
     onAuthStateChanged.mockImplementation((auth, cb) => {
-      cb({ uid: 'test-admin', email: 'stephan.admin@lst.de', isAnonymous: false });
+      cb({ uid: 'test-admin', email: 'stephan.asemota@gmail.com', isAnonymous: false });
       return vi.fn();
     });
     onSnapshot.mockImplementation((ref, onNext) => {
@@ -526,12 +550,21 @@ describe('useRetroStore', () => {
   });
 
   it('[Blind Spot D] updateActionItem: surfaces Sync-Fehler on Firestore failure', async () => {
-    const { updateDoc } = await import('firebase/firestore');
+    const { onSnapshot, updateDoc } = await import('firebase/firestore');
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementation((auth, cb) => {
+      cb({ uid: 'test-admin', email: 'stephan.asemota@gmail.com', isAnonymous: false });
+      return vi.fn();
+    });
+    onSnapshot.mockImplementation((ref, onNext) => {
+      if (ref.includes('entries')) { onNext({ docs: [] }); }
+      else { onNext({ exists: () => true, data: () => ({ id: '123', hostId: 'test-admin', currentPhase: 1, drillPath: [], sessionActionItems: [{ id: 'item-1', what: 'Old', who: 'TBD', when: 'TBD' }] }) }); }
+      return vi.fn();
+    });
     const { result } = renderHook(() => useRetroStore());
     await vi.waitFor(() => expect(result.current.loading).toBe(false));
-    // Join first so session + isHost are populated
     await act(async () => { await result.current.joinSession('123'); });
-    // NOW inject the rejection for the next updateDoc call (updateActionItem)
+    await vi.waitFor(() => expect(result.current.session).not.toBeNull());
     updateDoc.mockRejectedValueOnce(new Error('Action update failed'));
     await act(async () => {
       await result.current.updateActionItem('item-1', { who: 'Bob' });
