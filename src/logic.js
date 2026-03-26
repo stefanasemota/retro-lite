@@ -1,5 +1,6 @@
 /**
  * logic.js - Pure business logic for Retro-Lite
+ * Includes extracted pure helpers: buildActionItem, buildCSVContent, buildNavigationHistoryUpdate
  */
 
 export const CATEGORIES = [
@@ -106,4 +107,71 @@ export function findRootCategory(entry, allEntries) {
 export function addActionItem(items, newItem) {
   if (!items) return [newItem];
   return [...items, newItem];
+}
+
+/**
+ * buildActionItem - Constructs a structured action item from a Phase 3 entry.
+ * Extracted from App.jsx handleSaveActionItem so it can be unit-tested without React.
+ *
+ * @param {object} entry      - The winning Phase 3 entry being promoted
+ * @param {Array}  drillPath  - The current drill path from session state
+ * @param {Array}  allEntries - All session entries (needed for root category lookup)
+ * @returns {object} A structured action item ready for sessionActionItems
+ */
+export function buildActionItem(entry, drillPath, allEntries) {
+  if (!entry) return null;
+  const sourceAnchorText = drillPath?.[0]?.parentText || 'Unbekannt';
+  const rootCatId = findRootCategory(entry, allEntries) || CATEGORIES[0].id;
+  return {
+    id: entry.id,
+    originalWhat: entry.text,
+    what: entry.text,
+    who: 'To be assigned',
+    when: 'TBD',
+    sourceAnchorText,
+    categoryId: rootCatId,
+  };
+}
+
+/**
+ * buildCSVContent - Pure function to generate a CSV data-URI string from action items.
+ * Extracted from useRetroStore.exportActionsToCSV.
+ * Uses ?? '' (not || '') so null/undefined don't become the string "null".
+ *
+ * @param {Array} actions - sessionActionItems array
+ * @returns {string|null} CSV data-URI string, or null if actions is empty
+ */
+export function buildCSVContent(actions) {
+  if (!actions || actions.length === 0) return null;
+  const rows = [
+    ['Origin', 'Action', 'Assignee', 'Due Date'],
+    ...actions.map(a => [
+      `"${String(a.sourceAnchorText ?? '').replace(/"/g, '""')}"`,
+      `"${String(a.what            ?? '').replace(/"/g, '""')}"`,
+      `"${String(a.who             ?? '').replace(/"/g, '""')}"`,
+      `"${String(a.when            ?? '').replace(/"/g, '""')}"`,
+    ])
+  ];
+  return 'data:text/csv;charset=utf-8,\uFEFF' + rows.map(e => e.join(',')).join('\n');
+}
+
+/**
+ * buildNavigationHistoryUpdate - Determines the new navigationHistory for setDrillPhase.
+ * Returns the updated history array if a new entry should be added, or null if not.
+ *
+ * @param {Array}  currentHistory - The existing navigationHistory from session state
+ * @param {string} newFocusId    - The focusId being drilled into
+ * @param {Array}  newPath       - The new drillPath
+ * @returns {Array|null} Updated history array, or null if no update is needed
+ */
+export function buildNavigationHistoryUpdate(currentHistory, newFocusId, newPath) {
+  if (!newFocusId || !newPath || newPath.length === 0) return null;
+  const lastStep = newPath[newPath.length - 1];
+  const historyEntry = {
+    id:        lastStep.parentId,
+    text:      lastStep.parentText,
+    phase:     lastStep.phase,
+    drillPath: newPath,
+  };
+  return updateHistory(currentHistory, historyEntry);
 }

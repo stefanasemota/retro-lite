@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { getCategoryWinners, findRootCategory, filterEntries, getWinner, updateHistory, calculateCurrentPhase, addActionItem } from './logic';
+import {
+  getCategoryWinners, findRootCategory, filterEntries, getWinner,
+  updateHistory, calculateCurrentPhase, addActionItem,
+  buildActionItem, buildCSVContent, buildNavigationHistoryUpdate,
+} from './logic';
 
 describe('addActionItem', () => {
   it('appends a new item to an existing array, returning a new array instance to preserve list integrity', () => {
@@ -215,5 +219,97 @@ describe('calculateCurrentPhase', () => {
   it('caps at phase 4', () => {
     expect(calculateCurrentPhase([{}, {}, {}])).toBe(4);
     expect(calculateCurrentPhase([{}, {}, {}, {}])).toBe(4); // Even if longer
+  });
+});
+
+// ── NEW: Extracted pure helper tests ─────────────────────────────────────────
+
+describe('buildActionItem', () => {
+  const allEntries = [
+    { id: 'root', category: 'lacked', parentId: null },
+    { id: 'cause', category: null,    parentId: 'root' },
+    { id: 'sol',   category: null,    parentId: 'cause' },
+  ];
+
+  it('returns null for a null entry', () => {
+    expect(buildActionItem(null, [], [])).toBeNull();
+  });
+
+  it('builds a correct action item with root category resolved', () => {
+    const entry    = allEntries[2]; // sol, grandchild of root
+    const drillPath = [{ parentText: 'Root Topic', parentId: 'root', phase: 1 }];
+    const item = buildActionItem(entry, drillPath, allEntries);
+    expect(item.id).toBe('sol');
+    expect(item.originalWhat).toBe(entry.text);
+    expect(item.what).toBe(entry.text);
+    expect(item.who).toBe('To be assigned');
+    expect(item.when).toBe('TBD');
+    expect(item.sourceAnchorText).toBe('Root Topic');
+    expect(item.categoryId).toBe('lacked');
+  });
+
+  it('falls back to "Unbekannt" when drillPath is empty', () => {
+    const item = buildActionItem(allEntries[2], [], allEntries);
+    expect(item.sourceAnchorText).toBe('Unbekannt');
+  });
+
+  it('falls back to first CATEGORY id when root category cannot be resolved', () => {
+    const orphan = { id: 'orphan', text: 'Orphan', parentId: 'no-parent' };
+    const item = buildActionItem(orphan, [], [orphan]);
+    // findRootCategory returns null for an orphan → fallback to CATEGORIES[0].id
+    expect(item.categoryId).toBe('liked');
+  });
+});
+
+describe('buildCSVContent', () => {
+  it('returns null for null input', () => {
+    expect(buildCSVContent(null)).toBeNull();
+  });
+
+  it('returns null for an empty array', () => {
+    expect(buildCSVContent([])).toBeNull();
+  });
+
+  it('returns a CSV data-uri with a BOM header row', () => {
+    const actions = [{ sourceAnchorText: 'Origin', what: 'Do X', who: 'Alice', when: '2026-04-01' }];
+    const csv = buildCSVContent(actions);
+    expect(csv).toContain('data:text/csv;charset=utf-8,');
+    expect(csv).toContain('Origin,Action,Assignee,Due Date');
+    expect(csv).toContain('"Do X"');
+    expect(csv).toContain('"Alice"');
+  });
+
+  it('does NOT produce the literal string "null" for null field values', () => {
+    const actions = [{ sourceAnchorText: null, what: null, who: null, when: null }];
+    const csv = buildCSVContent(actions);
+    expect(csv).not.toContain('"null"');
+    // All fields should be empty strings
+    expect(csv).toContain('""');
+  });
+
+  it('does NOT produce the literal string "undefined" for undefined field values', () => {
+    const actions = [{ sourceAnchorText: undefined, what: undefined, who: undefined, when: undefined }];
+    const csv = buildCSVContent(actions);
+    expect(csv).not.toContain('"undefined"');
+  });
+});
+
+describe('buildNavigationHistoryUpdate', () => {
+  it('returns null when newFocusId is falsy', () => {
+    expect(buildNavigationHistoryUpdate([], null, [{ parentId: 'x', parentText: 'X', phase: 1 }])).toBeNull();
+  });
+
+  it('returns null when newPath is empty', () => {
+    expect(buildNavigationHistoryUpdate([], 'focusId', [])).toBeNull();
+  });
+
+  it('returns the updated history array when drill step is new', () => {
+    const currentHistory = [];
+    const newPath = [{ parentId: 'root', parentText: 'Root Topic', phase: 1 }];
+    const result = buildNavigationHistoryUpdate(currentHistory, 'root', newPath);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('root');
+    expect(result[0].text).toBe('Root Topic');
+    expect(result[0].phase).toBe(1);
   });
 });

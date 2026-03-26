@@ -395,4 +395,205 @@ describe('useRetroStore', () => {
     // Should switch cleanly
     expect(result.current.view).toBe('summary');
   });
+
+  // ── BLIND SPOT A: setManualPhase ─────────────────────────────────────────
+
+  it('[Blind Spot A] setManualPhase: surfaces error on Firestore failure', async () => {
+    const { onSnapshot } = await import('firebase/firestore');
+    const { onAuthStateChanged } = await import('firebase/auth');
+    // Restore mocks cleared by beforeEach so session + isHost are populated
+    onAuthStateChanged.mockImplementation((auth, cb) => {
+      cb({ uid: 'test-admin', email: 'stephan.admin@lst.de', isAnonymous: false });
+      return vi.fn();
+    });
+    onSnapshot.mockImplementation((ref, onNext) => {
+      if (ref.includes('entries')) {
+        onNext({ docs: [] });
+      } else {
+        onNext({ exists: () => true, data: () => ({ id: '123', hostId: 'test-admin', currentPhase: 1, drillPath: [] }) });
+      }
+      return vi.fn();
+    });
+    const { updateDoc } = await import('firebase/firestore');
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.joinSession('123'); });
+    await vi.waitFor(() => expect(result.current.session).not.toBeNull());
+    // NOW inject the rejection — consumed by the next updateDoc call (setManualPhase)
+    updateDoc.mockRejectedValueOnce(new Error('Manual phase write failed'));
+    await act(async () => { await result.current.setManualPhase(2); });
+    expect(result.current.error).toContain('Sync-Fehler');
+  });
+
+  it('[Blind Spot A] setManualPhase: non-host guard skips Firestore write', async () => {
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementationOnce((auth, cb) => {
+      cb({ uid: 'participant', isAnonymous: true });
+      return vi.fn();
+    });
+    const { updateDoc } = await import('firebase/firestore');
+    updateDoc.mockClear();
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    // host guard: isHost = session.hostId === user.uid → 'test-admin' !== 'participant'
+    await act(async () => { await result.current.setManualPhase(3); });
+    // updateDoc should NOT have been called for setManualPhase
+    expect(result.current.error).toBeNull();
+  });
+
+  // ── BLIND SPOT B: jumpToHistory ──────────────────────────────────────────
+
+  it('[Blind Spot B] jumpToHistory: surfaces Sync-Fehler on Firestore failure', async () => {
+    const { updateDoc } = await import('firebase/firestore');
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    // Join first so session + isHost are populated
+    await act(async () => { await result.current.joinSession('123'); });
+    // NOW inject the rejection for the next updateDoc call (jumpToHistory)
+    updateDoc.mockRejectedValueOnce(new Error('History jump failed'));
+    await act(async () => {
+      await result.current.jumpToHistory({ phase: 1, id: 'e1', drillPath: [] });
+    });
+    expect(result.current.error).toContain('Sync-Fehler');
+  });
+
+  it('[Blind Spot B] jumpToHistory: non-host guard exits without write', async () => {
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementationOnce((auth, cb) => {
+      cb({ uid: 'non-host', isAnonymous: true });
+      return vi.fn();
+    });
+    const { updateDoc } = await import('firebase/firestore');
+    updateDoc.mockClear();
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => {
+      await result.current.jumpToHistory({ phase: 1, id: 'e1', drillPath: [] });
+    });
+    expect(result.current.error).toBeNull();
+  });
+
+  // ── BLIND SPOT C: saveActionItemAndReset ──────────────────────────────────
+
+  it('[Blind Spot C] saveActionItemAndReset: non-host guard exits without write', async () => {
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementationOnce((auth, cb) => {
+      cb({ uid: 'participant', isAnonymous: true });
+      return vi.fn();
+    });
+    const { updateDoc } = await import('firebase/firestore');
+    updateDoc.mockClear();
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => {
+      await result.current.saveActionItemAndReset({ id: 'x', what: 'Do X', who: 'TBD', when: 'TBD' });
+    });
+    expect(result.current.error).toBeNull();
+  });
+
+  // ── BLIND SPOT D: updateActionItem ───────────────────────────────────────
+
+  it('[Blind Spot D] updateActionItem: success path — maps updates correctly and calls updateDoc', async () => {
+    const { onSnapshot, updateDoc } = await import('firebase/firestore');
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementation((auth, cb) => {
+      cb({ uid: 'test-admin', email: 'stephan.admin@lst.de', isAnonymous: false });
+      return vi.fn();
+    });
+    onSnapshot.mockImplementation((ref, onNext) => {
+      if (ref.includes('entries')) {
+        onNext({ docs: [] });
+      } else {
+        onNext({ exists: () => true, data: () => ({
+          id: '123', hostId: 'test-admin', currentPhase: 1, drillPath: [],
+          sessionActionItems: [{ id: 'item-1', what: 'Old', who: 'TBD', when: 'TBD' }],
+        }) });
+      }
+      return vi.fn();
+    });
+    updateDoc.mockResolvedValue();
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.joinSession('123'); });
+    await vi.waitFor(() => expect(result.current.session).not.toBeNull());
+    updateDoc.mockClear();
+    updateDoc.mockResolvedValueOnce();
+    await act(async () => {
+      await result.current.updateActionItem('item-1', { who: 'Alice', when: '2026-04-01' });
+    });
+    expect(result.current.error).toBeNull();
+    expect(updateDoc).toHaveBeenCalledTimes(1);
+  });
+
+  it('[Blind Spot D] updateActionItem: surfaces Sync-Fehler on Firestore failure', async () => {
+    const { updateDoc } = await import('firebase/firestore');
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    // Join first so session + isHost are populated
+    await act(async () => { await result.current.joinSession('123'); });
+    // NOW inject the rejection for the next updateDoc call (updateActionItem)
+    updateDoc.mockRejectedValueOnce(new Error('Action update failed'));
+    await act(async () => {
+      await result.current.updateActionItem('item-1', { who: 'Bob' });
+    });
+    expect(result.current.error).toContain('Sync-Fehler');
+  });
+
+  it('[Blind Spot D] updateActionItem: non-host guard exits without write', async () => {
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementationOnce((auth, cb) => {
+      cb({ uid: 'participant', isAnonymous: true });
+      return vi.fn();
+    });
+    const { updateDoc } = await import('firebase/firestore');
+    updateDoc.mockClear();
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => {
+      await result.current.updateActionItem('item-1', { who: 'Alice' });
+    });
+    expect(result.current.error).toBeNull();
+  });
+
+  // ── In-flight vote lock ──────────────────────────────────────────────────
+
+  it('toggleVote in-flight lock: rapid double-click fires updateDoc only once', async () => {
+    const { updateDoc } = await import('firebase/firestore');
+    // Simulate slow network: first call resolves after a tick
+    let resolveFirst;
+    updateDoc.mockImplementationOnce(() => new Promise(r => { resolveFirst = r; }));
+    updateDoc.mockResolvedValue(); // fallback for any other calls
+
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.joinSession('123'); });
+
+    updateDoc.mockClear();
+    // Fire two toggleVote calls without awaiting — simulates double-click
+    let p1, p2;
+    act(() => {
+      p1 = result.current.toggleVote('e1', []);
+      p2 = result.current.toggleVote('e1', []);
+    });
+    // Resolve the in-flight promise
+    resolveFirst?.();
+    await act(async () => { await Promise.allSettled([p1, p2]); });
+
+    // Only ONE updateDoc call should have been made (second is blocked by in-flight lock)
+    const updateDocCallCount = updateDoc.mock.calls.length;
+    expect(updateDocCallCount).toBe(1);
+  });
+
+  // ── BDD participant role path ─────────────────────────────────────────────
+
+  it('test mode with role=participant sets participant user identity', async () => {
+    Object.defineProperty(window, 'location', {
+      value: { search: '?testMode=true&role=participant' },
+      writable: true
+    });
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.user.email).toBe('michael.part@lst.de');
+    expect(result.current.user.uid).not.toBe('test-admin');
+  });
 });

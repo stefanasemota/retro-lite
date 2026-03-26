@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, LogOut, Send, ShieldCheck, Eye, EyeOff, AlertCircle, ChevronLeft, X, Sparkles, CheckSquare } from 'lucide-react';
 import { useRetroStore } from './useRetroStore';
-import { CATEGORIES, getWinner, getCategoryWinners, findRootCategory } from './logic';
+import { CATEGORIES, getWinner, getCategoryWinners, buildActionItem } from './logic';
 import { PHASES, BoardView, ContextSidebar, AdminControlTower, ContextHeader, GenesisTable } from './components';
 
 export default function App() {
@@ -60,19 +60,10 @@ export default function App() {
 
   const handleSaveActionItem = (entry) => {
     if (!store.isHost) return;
-    const sourceAnchorText = store.drillPath[0]?.parentText || 'Unbekannt';
-    const rootCatId = findRootCategory(entry, store.allEntries) || CATEGORIES[0].id;
-    const actionItem = {
-      id: entry.id,
-      originalWhat: entry.text,
-      what: entry.text,
-      who: 'To be assigned',
-      when: 'TBD',
-      sourceAnchorText,
-      categoryId: rootCatId
-    };
-    store.saveActionItemAndReset(actionItem);
+    const actionItem = buildActionItem(entry, store.drillPath, store.allEntries);
+    if (actionItem) store.saveActionItemAndReset(actionItem);
   };
+
 
   // ── Render ───────────────────────────────────────────────────────────────
   if (store.loading) {

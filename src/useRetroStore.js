@@ -1,5 +1,5 @@
 /* global __initial_auth_token */
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import {
   getAuth, signInWithPopup, GoogleAuthProvider,
@@ -10,7 +10,10 @@ import {
   collection, addDoc, onSnapshot, serverTimestamp,
   increment, arrayUnion, arrayRemove
 } from 'firebase/firestore';
-import { filterEntries, updateHistory, calculateCurrentPhase } from './logic';
+import {
+  filterEntries, updateHistory, calculateCurrentPhase,
+  buildCSVContent, buildNavigationHistoryUpdate,
+} from './logic';
 
 // ── Firebase Init ────────────────────────────────────────────────────────────
 let app, auth, db;
@@ -49,6 +52,10 @@ export function useRetroStore() {
   const [session, setSession]       = useState(null);
   const [allEntries, setAllEntries] = useState([]);
   const [error, setError]           = useState(null);
+
+  // In-flight lock: prevents double-click race on toggleVote.
+  // Using a ref (not state) so the Set mutation never triggers a re-render.
+  const votingInFlightRef = useRef(new Set());
 
   // Auth Init
   useEffect(() => {
@@ -243,6 +250,11 @@ export function useRetroStore() {
 
   const toggleVote = async (entryId, voters = []) => {
     if (!user) return;
+    // In-flight lock: bail if a write for this entry is already in progress.
+    // Prevents the double-click race where votes increments twice but voters
+    // only union'd once (Firestore atomic ops don't help with stale closure reads).
+    if (votingInFlightRef.current.has(entryId)) return;
+    votingInFlightRef.current.add(entryId);
     const hasVoted = voters.includes(user.uid);
     try {
       await updateDoc(entryRef(sessionId, entryId), {
@@ -252,6 +264,8 @@ export function useRetroStore() {
     } catch (err) { 
       console.error('[STORE] toggleVote failed:', err);
       setError('Fehler beim Abstimmen.'); 
+    } finally {
+      votingInFlightRef.current.delete(entryId);
     }
   };
 
@@ -275,17 +289,10 @@ export function useRetroStore() {
         drillPath: newPath
       };
       
-      // Add to navigationHistory if drilling into a specific ID
-      if (newFocusId && newPath.length > 0) {
-        const lastStep = newPath[newPath.length - 1];
-        const historyEntry = {
-          id: lastStep.parentId,
-          text: lastStep.parentText,
-          phase: lastStep.phase,
-          drillPath: newPath
-        };
-        
-        updates.navigationHistory = updateHistory(session?.navigationHistory, historyEntry);
+      // Add to navigationHistory if drilling into a specific ID (pure helper)
+      const updatedHistory = buildNavigationHistoryUpdate(session?.navigationHistory, newFocusId, newPath);
+      if (updatedHistory !== null) {
+        updates.navigationHistory = updatedHistory;
       }
 
       await updateDoc(sessionRef(sessionId), updates);
@@ -302,16 +309,26 @@ export function useRetroStore() {
       updates.focusId = null;
       updates.drillPath = [];
     }
-    await updateDoc(sessionRef(sessionId), updates);
+    try {
+      await updateDoc(sessionRef(sessionId), updates);
+    } catch (err) {
+      console.error('[STORE] setManualPhase failed:', err);
+      setError(`Sync-Fehler: ${err.message}`);
+    }
   };
 
   const jumpToHistory = async (item) => {
     if (!isHost) return;
-    await updateDoc(sessionRef(sessionId), {
-      currentPhase: item.phase + 1,
-      focusId: item.id,
-      drillPath: item.drillPath
-    });
+    try {
+      await updateDoc(sessionRef(sessionId), {
+        currentPhase: item.phase + 1,
+        focusId: item.id,
+        drillPath: item.drillPath
+      });
+    } catch (err) {
+      console.error('[STORE] jumpToHistory failed:', err);
+      setError(`Sync-Fehler: ${err.message}`);
+    }
   };
 
   const completeRetro = async () => {
@@ -354,21 +371,13 @@ export function useRetroStore() {
 
   const exportActionsToCSV = () => {
     const actions = session?.sessionActionItems || [];
-    if (actions.length === 0) return;
-    const rows = [
-      ['Origin', 'Action', 'Assignee', 'Due Date'],
-      ...actions.map(a => [
-        `"${String(a.sourceAnchorText || '').replace(/"/g, '""')}"`,
-        `"${String(a.what || '').replace(/"/g, '""')}"`,
-        `"${String(a.who || '').replace(/"/g, '""')}"`,
-        `"${String(a.when || '').replace(/"/g, '""')}"`
-      ])
-    ];
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + rows.map(e => e.join(",")).join("\n");
+    // buildCSVContent returns null for empty arrays — no DOM work needed
+    const csvContent = buildCSVContent(actions);
+    if (!csvContent) return;
     const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Retro_Actions_${new Date().toISOString().split('T')[0]}.csv`);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Retro_Actions_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

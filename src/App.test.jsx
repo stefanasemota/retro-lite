@@ -116,4 +116,86 @@ describe('App', () => {
     render(<App />);
     expect(screen.getByText(/Network Down!/)).toBeTruthy();
   });
+
+  it('renders GenesisTable (not BoardView) when currentPhase is 4', () => {
+    useRetroStoreModule.useRetroStore.mockReturnValue({
+      loading: false,
+      view: 'session',
+      currentPhase: 4,
+      session: { sessionId: '123', sessionActionItems: [] },
+      displayEntries: [],
+      allEntries: [],
+      drillPath: [],
+      user: { uid: 'host', isAnonymous: false },
+      isHost: true,
+      error: null,
+      sessionId: '123',
+      updateActionItem: vi.fn(),
+      exportActionsToCSV: vi.fn(),
+      completeRetro: vi.fn(),
+      clearError: vi.fn(),
+      toggleBlur: vi.fn(),
+      leaveSession: vi.fn(),
+    });
+    render(<App />);
+    // GenesisTable renders the Genesis Evolution Matrix header
+    expect(screen.getByText(/Genesis Evolution Matrix/i)).toBeTruthy();
+    // BoardView-specific elements should NOT be present
+    expect(screen.queryByTestId('entry-input')).toBeNull();
+  });
+
+  it('renders GenesisTable when view is "summary"', () => {
+    useRetroStoreModule.useRetroStore.mockReturnValue({
+      loading: false,
+      view: 'summary',
+      currentPhase: 4,
+      session: { sessionId: '123', sessionActionItems: [] },
+      displayEntries: [],
+      allEntries: [],
+      drillPath: [],
+      user: { uid: 'host', isAnonymous: false },
+      isHost: true,
+      error: null,
+      sessionId: '123',
+      updateActionItem: vi.fn(),
+      exportActionsToCSV: vi.fn(),
+      completeRetro: vi.fn(),
+      clearError: vi.fn(),
+      toggleBlur: vi.fn(),
+      leaveSession: vi.fn(),
+    });
+    render(<App />);
+    expect(screen.getByText(/Genesis Evolution Matrix/i)).toBeTruthy();
+  });
+
+  it('handleCreateSession finally block: isCreating resets to false after a failed session creation', async () => {
+    const createSession = vi.fn().mockRejectedValue(new Error('Session create failed'));
+    const clearError = vi.fn();
+    useRetroStoreModule.useRetroStore.mockReturnValue({
+      loading: false,
+      view: 'landing',
+      session: null,
+      user: { uid: 'u1', isAnonymous: false },
+      drillPath: [],
+      createSession,
+      clearError,
+      error: null,
+    });
+    render(<App />);
+
+    // Open the session name modal
+    fireEvent.click(screen.getByTestId('host-session-button'));
+    fireEvent.change(screen.getByTestId('session-name-input'), { target: { value: 'Failing Session' } });
+
+    // Click create — this will reject
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('btn-create-session'));
+    });
+
+    // The create button should no longer say "Erstelle Session…" (isCreating reset to false)
+    // It should be disabled since sessionName might be cleared or error ui appears
+    expect(createSession).toHaveBeenCalledWith('Failing Session');
+    // After the finally block, the button should not be stuck in "creating" state
+    expect(screen.queryByText('Erstelle Session…')).toBeNull();
+  });
 });
