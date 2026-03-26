@@ -370,8 +370,12 @@ export function useRetroStore() {
   const saveActionItemAndReset = async (item) => {
     if (!isHost) return;
     try {
+      // 1. Schreibvorgang abwarten (Action Item speichern)
       await updateDoc(sessionRef(sessionId), {
-        sessionActionItems: arrayUnion(item),
+        sessionActionItems: arrayUnion(item)
+      });
+      // 2. State zurücksetzen (Phase 1, nullify drill)
+      await updateDoc(sessionRef(sessionId), {
         currentPhase: 1,
         focusId: null,
         drillPath: []
