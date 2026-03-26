@@ -313,3 +313,26 @@ describe('buildNavigationHistoryUpdate', () => {
     expect(result[0].phase).toBe(1);
   });
 });
+
+// ── formatDate ────────────────────────────────────────────────────────────────
+import { formatDate } from './logic';
+
+describe('formatDate', () => {
+  it('converts a Firestore-style Timestamp (with toDate()) to DD.MM.YYYY', () => {
+    const ts = { toDate: () => new Date('2026-03-20') };
+    expect(formatDate(ts)).toBe('20.03.2026');
+  });
+
+  it('converts a JS Date object to DD.MM.YYYY', () => {
+    expect(formatDate(new Date('2026-01-05'))).toBe('05.01.2026');
+  });
+
+  it('converts an ISO date string to DD.MM.YYYY', () => {
+    expect(formatDate('2026-12-31')).toBe('31.12.2026');
+  });
+
+  it('returns empty string for null/undefined input', () => {
+    expect(formatDate(null)).toBe('');
+    expect(formatDate(undefined)).toBe('');
+  });
+});

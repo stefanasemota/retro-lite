@@ -37,8 +37,8 @@ describe('GenesisTable', () => {
   it('renders actions and correctly calculates completion rate', () => {
     const session = {
       sessionActionItems: [
-        { id: 'e1', what: 'Action 1', who: 'To be assigned', when: 'TBD', sourceAnchorText: 'Origin A', categoryId: 'liked' },
-        { id: 'e2', what: 'Action 2', who: 'To be assigned', when: 'TBD', sourceAnchorText: 'Origin B', categoryId: 'learned' }
+        { id: 'e1', what: 'Action 1', who: 'To be assigned', when: 'TBD', done: true,  sourceAnchorText: 'Origin A', categoryId: 'liked' },
+        { id: 'e2', what: 'Action 2', who: 'To be assigned', when: 'TBD', done: true,  sourceAnchorText: 'Origin B', categoryId: 'learned' }
       ]
     };
     render(<GenesisTable session={session} />);
@@ -46,7 +46,7 @@ describe('GenesisTable', () => {
     // Total actions should be 2
     expect(screen.getAllByText('2').length).toBeGreaterThan(0);
     
-    // 100% completion rate (2 actions, all completed by new definition)
+    // 100% completion rate (both items have done: true)
     expect(screen.getByText('100% of goal')).toBeTruthy();
     
     // Check if the actions are rendered in the table

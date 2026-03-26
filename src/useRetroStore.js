@@ -8,7 +8,8 @@ import {
 import {
   getFirestore, doc, setDoc, getDoc, updateDoc,
   collection, addDoc, onSnapshot, serverTimestamp,
-  increment, arrayUnion, arrayRemove
+  increment, arrayUnion, arrayRemove,
+  query, where, orderBy, getDocs, deleteDoc,
 } from 'firebase/firestore';
 import {
   filterEntries, updateHistory, calculateCurrentPhase,
@@ -56,6 +57,7 @@ export function useRetroStore() {
   const [session, setSession]       = useState(null);
   const [allEntries, setAllEntries] = useState([]);
   const [error, setError]           = useState(null);
+  const [history, setHistory]       = useState([]);
 
   // In-flight lock: prevents double-click race on toggleVote.
   // Using a ref (not state) so the Set mutation never triggers a re-render.
@@ -395,6 +397,44 @@ export function useRetroStore() {
     document.body.removeChild(link);
   };
 
+  /**
+   * fetchRetroHistory — loads all completed sessions ordered newest first.
+   * NOTE: requires a Firestore composite index on (isCompleted ASC, createdAt DESC).
+   * If missing, Firestore will log the creation URL in the browser console.
+   */
+  const fetchRetroHistory = async () => {
+    if (!db || !user) return;
+    try {
+      const sessionsCol = collection(db, 'artifacts', APP_ID, 'public', 'data', 'sessions');
+      const q = query(
+        sessionsCol,
+        where('isCompleted', '==', true),
+        orderBy('createdAt', 'desc')
+      );
+      const snap = await getDocs(q);
+      setHistory(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (err) {
+      console.error('[retro-Lite] fetchRetroHistory failed:', err);
+      setError('Fehler beim Laden der Session-Historie.');
+    }
+  };
+
+  const deleteSession = async (sid) => {
+    if (!isHost) return;
+    try {
+      await deleteDoc(sessionRef(sid));
+      setHistory(prev => prev.filter(s => s.id !== sid));
+    } catch (err) {
+      console.error('[retro-Lite] deleteSession failed:', err);
+      setError(`Sync-Fehler: ${err.message}`);
+    }
+  };
+
+  const viewSession = (sid) => {
+    setSessionId(sid);
+    setView('summary');
+  };
+
   const clearError = () => setError(null);
 
   return {
@@ -402,11 +442,13 @@ export function useRetroStore() {
     user, loading, error, clearError,
     sessionId, view, session, allEntries, displayEntries,
     currentPhase, focusId, drillPath, isHost,
-    
+    history,
+
     // Actions
     loginAdmin, logout, joinSession, createSession, leaveSession,
     addEntry, toggleVote, toggleBlur, setDrillPhase,
     setManualPhase, jumpToHistory, completeRetro,
-    saveActionItemAndReset, updateActionItem, exportActionsToCSV
+    saveActionItemAndReset, updateActionItem, exportActionsToCSV,
+    fetchRetroHistory, deleteSession, viewSession,
   };
 }

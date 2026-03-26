@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import html2canvas from 'html2canvas';
 import { ThumbsUp, Trophy, Search, Lightbulb, CheckSquare, ClipboardList, Settings, Activity, History, LayoutList, Clock, User } from 'lucide-react';
 
 import { CATEGORIES, PHASE_CONFIG, findRootCategory } from './logic';
@@ -420,12 +421,25 @@ export function AdminControlTower({ store }) {
 }
 
 // ── Genesis Table (Phase 4 Dashboard) ───────────────────────────────────────
-export function GenesisTable({ session, updateActionItem, isHost }) {
+export function GenesisTable({ session, updateActionItem, isHost, onExportPNG }) {
+  const matrixRef = useRef(null);
+
+  const handleExportPNG = async () => {
+    if (!matrixRef.current) return;
+    try {
+      const canvas = await html2canvas(matrixRef.current, { scale: 2, useCORS: true });
+      const link = document.createElement('a');
+      link.download = `retro-Lite_Actions_${new Date().toISOString().split('T')[0]}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('[retro-Lite] PNG export failed:', err);
+    }
+  };
+
   const actions = session?.sessionActionItems || [];
-  const totalActions = actions.length;
-  // All recorded actions are considered committed for now
-  const completedActions = actions.length;
-  const rate = totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0;
+  const completedActions = actions.filter(a => a.done).length;
+  const rate = actions.length ? Math.round((completedActions / actions.length) * 100) : 0;
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
@@ -434,7 +448,7 @@ export function GenesisTable({ session, updateActionItem, isHost }) {
           <div className="p-5 bg-rose-50 text-rose-600 rounded-3xl group-hover:rotate-12 transition-transform"><LayoutList className="w-8 h-8"/></div>
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Total Actions</p>
-            <h3 className="text-4xl font-black text-slate-800 tracking-tighter">{totalActions}</h3>
+            <h3 className="text-4xl font-black text-slate-800 tracking-tighter">{actions.length}</h3>
             <p className="text-[10px] text-emerald-500 font-bold mt-1 uppercase">↑ 4% this month</p>
           </div>
         </div>
@@ -448,24 +462,33 @@ export function GenesisTable({ session, updateActionItem, isHost }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-50">
+      <div ref={matrixRef} className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-50">
         <div className="px-12 py-10 bg-slate-50/50 border-b flex justify-between items-center">
           <div>
             <h2 className="font-black text-2xl tracking-tighter text-slate-800">Genesis Evolution Matrix</h2>
             <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mt-1">TEAM COMMITMENT TRACKER</p>
           </div>
-          <div className="flex gap-3 bg-white p-2 rounded-full shadow-inner border border-slate-200">
-            {['All', 'Pending', 'Done'].map(tab => (
-              <button key={tab} className={`px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${tab === 'All' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>{tab}</button>
-            ))}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleExportPNG}
+              className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-500 bg-white border border-slate-200 px-5 py-2.5 rounded-full hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all shadow-sm"
+              title="Export Matrix as PNG"
+            >
+              ↓ Export as PNG
+            </button>
+            <div className="flex gap-3 bg-white p-2 rounded-full shadow-inner border border-slate-200">
+              {['All', 'Pending', 'Done'].map(tab => (
+                <button key={tab} className={`px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${tab === 'All' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>{tab}</button>
+              ))}
+            </div>
           </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b">
-                <th className="px-12 py-8 w-64">Beschlossene Lösung</th>
-                <th className="px-12 py-8">Konkrete Maßnahme (What)</th>
+                <th className="px-12 py-8" style={{minWidth: '260px', width: '30%'}}>Beschlossene Lösung</th>
+                <th className="px-12 py-8" style={{minWidth: '260px', width: '35%'}}>Konkrete Maßnahme (What)</th>
                 <th className="px-12 py-8 w-40">Timing / Impact</th>
                 <th className="px-12 py-8 text-right w-48">Assignee</th>
               </tr>
@@ -474,23 +497,23 @@ export function GenesisTable({ session, updateActionItem, isHost }) {
               {actions.map((item) => {
                 const cat = CATEGORIES.find(c => c.id === item.categoryId) || CATEGORIES[0];
                 return (
-                  <tr key={item.id} className="group hover:bg-slate-50/50 transition-all border-b last:border-none">
-                    <td className="px-12 py-10">
+                  <tr key={item.id} className="group hover:bg-slate-50/50 transition-all border-b last:border-none align-top">
+                    <td className="px-12 py-8">
                       <div className="flex items-start gap-4">
                         <div className={`w-1.5 h-12 rounded-full ${PHASE_THEMES[3].accent} opacity-30 mt-1`}/>
                         <div>
-                          <p className="font-bold text-slate-700 text-[14px] leading-snug pr-4">{item.originalWhat || item.what}</p>
+                          <p className="font-bold text-slate-700 text-[14px] leading-relaxed whitespace-pre-wrap break-words pr-4">{item.originalWhat || item.what}</p>
                           <div className="flex items-center gap-4 mt-3">
                             <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 rounded-md shadow-sm"><Activity className={`w-3 h-3 ${cat.text}`}/> {item.sourceAnchorText}</span>
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-12 py-10">
+                    <td className="px-12 py-8">
                       <textarea
                         disabled={!isHost}
                         placeholder="Erfasse die konkrete Massnahme..."
-                        className="w-full min-w-0 bg-white border-2 border-slate-100 text-emerald-800 text-[15px] font-bold px-4 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none h-[100px] shadow-sm transition-colors disabled:opacity-50 placeholder:text-slate-300"
+                        className="w-full min-w-0 bg-white border-2 border-slate-100 text-emerald-800 text-[15px] font-bold px-4 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none h-[120px] shadow-sm transition-colors disabled:opacity-50 placeholder:text-slate-300 whitespace-pre-wrap"
                         value={item.what}
                         onChange={(e) => updateActionItem(item.id, { what: e.target.value })}
                       />

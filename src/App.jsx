@@ -1,8 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, LogOut, Send, ShieldCheck, Eye, EyeOff, AlertCircle, ChevronLeft, X, Sparkles, CheckSquare } from 'lucide-react';
 import { useRetroStore } from './useRetroStore';
-import { CATEGORIES, getWinner, getCategoryWinners, buildActionItem } from './logic';
+import { CATEGORIES, getWinner, getCategoryWinners, buildActionItem, formatDate } from './logic';
 import { PHASES, BoardView, ContextSidebar, AdminControlTower, ContextHeader, GenesisTable } from './components';
+
+// ── Retro History List (Admin Panel) ────────────────────────────────────────
+function RetroHistoryList({ history, onView, onDelete }) {
+  if (!history || history.length === 0) {
+    return (
+      <p className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-widest py-4">
+        Noch keine abgeschlossenen Sessions
+      </p>
+    );
+  }
+  return (
+    <div className="mt-4 bg-white border border-slate-100 rounded-[2rem] overflow-hidden shadow-sm">
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-6 py-4 border-b">
+        retro-Lite Session History
+      </p>
+      <ul className="divide-y divide-slate-50">
+        {history.map(session => (
+          <li key={session.id} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors">
+            <div>
+              <p className="text-[13px] font-black text-slate-700">{session.sessionName || session.id}</p>
+              <p className="text-[11px] text-slate-400 font-bold mt-0.5">{formatDate(session.createdAt)}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                data-testid={`view-session-${session.id}`}
+                onClick={() => onView(session.id)}
+                className="text-[11px] font-black px-4 py-2 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors uppercase tracking-widest"
+              >
+                View
+              </button>
+              <button
+                data-testid={`delete-session-${session.id}`}
+                onClick={() => onDelete(session.id)}
+                className="text-[11px] font-black px-4 py-2 rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors uppercase tracking-widest"
+              >
+                Delete
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export default function App() {
   const store = useRetroStore();
@@ -254,7 +298,14 @@ export default function App() {
               </div>
               <div className="relative py-4"><div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200"/></div><div className="relative flex justify-center text-[11px] font-black uppercase tracking-widest text-slate-400"><span className="bg-slate-50 px-6">Admin Area</span></div></div>
               {store.user && !store.user.isAnonymous ? (
-                <button data-testid="host-session-button" onClick={() => { setSessionName(`retro-Lite ${new Date().toLocaleDateString('de-DE')}`); setShowNameModal(true); }} className="w-full bg-white border-2 border-indigo-600 text-indigo-600 py-6 rounded-[2.5rem] font-black hover:bg-indigo-50 transition-all flex items-center justify-center gap-4 shadow-xl shadow-indigo-50"><Plus className="w-7 h-7"/> Neue Session hosten</button>
+                <>
+                  <button data-testid="host-session-button" onClick={() => { setSessionName(`retro-Lite ${new Date().toLocaleDateString('de-DE')}`); setShowNameModal(true); }} className="w-full bg-white border-2 border-indigo-600 text-indigo-600 py-6 rounded-[2.5rem] font-black hover:bg-indigo-50 transition-all flex items-center justify-center gap-4 shadow-xl shadow-indigo-50"><Plus className="w-7 h-7"/> Neue Session hosten</button>
+                  <RetroHistoryList
+                    history={store.history}
+                    onView={store.viewSession}
+                    onDelete={store.deleteSession}
+                  />
+                </>
               ) : (
                 <button onClick={store.loginAdmin} className="w-full bg-slate-900 text-white py-6 rounded-[2.5rem] font-black shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-transform"><ShieldCheck className="w-7 h-7 text-indigo-400"/> Admin Login</button>
               )}

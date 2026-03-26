@@ -175,3 +175,28 @@ export function buildNavigationHistoryUpdate(currentHistory, newFocusId, newPath
   };
   return updateHistory(currentHistory, historyEntry);
 }
+
+/**
+ * formatDate - Converts a Firestore Timestamp, JS Date, or ISO string
+ * to a human-readable "DD.MM.YYYY" string.
+ * Returns '' for null/undefined inputs.
+ *
+ * @param {object|Date|string|null} timestamp
+ * @returns {string}
+ */
+export function formatDate(timestamp) {
+  if (!timestamp) return '';
+  let date;
+  if (typeof timestamp.toDate === 'function') {
+    date = timestamp.toDate();
+  } else if (timestamp instanceof Date) {
+    date = timestamp;
+  } else {
+    date = new Date(timestamp);
+  }
+  if (isNaN(date.getTime())) return '';
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}.${mm}.${yyyy}`;
+}
