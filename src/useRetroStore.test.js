@@ -401,7 +401,7 @@ describe('useRetroStore', () => {
   it('navigates to summary when session marks as completed', async () => {
     // Simulate session arriving completed
     const { onSnapshot } = await import('firebase/firestore');
-    onSnapshot.mockImplementation((ref, onNext) => {
+    onSnapshot.mockImplementationOnce((ref, onNext) => {
       if (!ref.includes('entries')) {
         onNext({ exists: () => true, data: () => ({ id: '123', isCompleted: true }) });
       } else {
@@ -414,6 +414,36 @@ describe('useRetroStore', () => {
     await act(async () => { await result.current.joinSession('123'); });
     // Should switch cleanly
     expect(result.current.view).toBe('summary');
+  });
+
+  it('handles Save -> Verify in Matrix flow', async () => {
+    const { updateDoc } = await import('firebase/firestore');
+    const { result } = renderHook(() => useRetroStore());
+    
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.joinSession('123'); });
+    
+    // Wait for session state to populate and host access to be granted
+    await vi.waitFor(() => {
+      expect(result.current.session).not.toBeNull();
+      expect(result.current.isHost).toBe(true);
+    });
+
+    // Save action item
+    const mockAction = { id: 'a1', what: 'Fix tests', sourceEntryId: 'e1' };
+    await act(async () => { await result.current.saveActionItemAndReset(mockAction); });
+    
+    // Check updateDoc calls for saving Action Item
+    expect(updateDoc).toHaveBeenCalled();
+    const saveCallArg = updateDoc.mock.calls.find(c => c[1].sessionActionItems);
+    expect(saveCallArg).toBeTruthy();
+    expect(saveCallArg[1].sessionActionItems).toEqual(mockAction); // Because we mocked arrayUnion to return val
+
+    // Simulate clicking "Massnahmen" (Phase 4)
+    await act(async () => { await result.current.setManualPhase(4); });
+    // Verify setManualPhase called updateDoc with phase 4
+    const phaseCallArg = updateDoc.mock.calls.find(c => c[1].currentPhase === 4);
+    expect(phaseCallArg).toBeTruthy();
   });
 
   // ── BLIND SPOT A: setManualPhase ─────────────────────────────────────────

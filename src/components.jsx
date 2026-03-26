@@ -122,11 +122,11 @@ export function AnchorBanner({ drillPath, currentPhase }) {
 
 
 // ── Entry Card Component ──────────────────────────────────────────────────────
-export function EntryCard({ entry, user, session, currentPhase, toggleVote, isWinner, isCategoryWinner, onDrill, onSaveAction, history = [] }) {
+export function EntryCard({ entry, user, session, currentPhase, toggleVote, isWinner, isCategoryWinner, onDrill, onSaveAction, isSavingAction, history = [] }) {
   const phase = PHASES[currentPhase] || PHASES[1];
   const isBlurred = session?.isBlurred && entry.userId !== user?.uid;
   const hasVoted  = entry.voters?.includes(user?.uid);
-  const wasDrilled = history.some(h => h.id === entry.id);
+  const wasDrilled = session?.sessionActionItems?.some(a => a.sourceEntryId === entry.id || a.id === entry.id);
 
   return (
     <div data-testid="retro-card" className={`relative px-8 py-7 rounded-[2.5rem] border border-white shadow-sm bg-white hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 overflow-hidden group ${isBlurred ? 'blur-md select-none opacity-40' : ''}`}>
@@ -169,10 +169,14 @@ export function EntryCard({ entry, user, session, currentPhase, toggleVote, isWi
       )}
 
       {isCategoryWinner && currentPhase === 3 && onSaveAction && (
-        <button data-testid="save-action-button" onClick={onSaveAction}
-          className={`mt-6 w-full flex items-center justify-center gap-3 py-4.5 px-6 rounded-[1.5rem] text-[13px] font-black transition-all active:scale-95 border-2 shadow-sm bg-emerald-600 text-white border-transparent hover:brightness-110`}>
-          <CheckSquare className="w-4 h-4" />
-          Massnahme sichern & Nächstes Thema
+        <button data-testid="save-action-button" onClick={onSaveAction} disabled={isSavingAction === entry.id}
+          className={`mt-6 w-full flex items-center justify-center gap-3 py-4.5 px-6 rounded-[1.5rem] text-[13px] font-black transition-all active:scale-95 border-2 shadow-sm ${isSavingAction === entry.id ? 'bg-emerald-600/50 cursor-not-allowed' : 'bg-emerald-600 hover:brightness-110'} text-white border-transparent`}>
+          {isSavingAction === entry.id ? (
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <CheckSquare className="w-4 h-4" />
+          )}
+          {isSavingAction === entry.id ? 'Wird gespeichert...' : 'Massnahme sichern & Nächstes Thema'}
         </button>
       )}
 
@@ -194,7 +198,7 @@ export function EmptyState() {
   );
 }
 
-export function BoardView({ entries, currentPhase, user, session, toggleVote, onDrill, onSaveAction, winnerId, categoryWinners, drillPath }) {
+export function BoardView({ entries, currentPhase, user, session, toggleVote, onDrill, onSaveAction, isSavingAction, winnerId, categoryWinners, drillPath }) {
   const history = session?.navigationHistory || [];
 
   if (currentPhase === 1) {
@@ -223,6 +227,7 @@ export function BoardView({ entries, currentPhase, user, session, toggleVote, on
                   isCategoryWinner={categoryWinners && categoryWinners[entry.category]?.includes(entry.id)}
                   onDrill={onDrill ? () => onDrill(entry) : null}
                   onSaveAction={null}
+                  isSavingAction={false}
                   history={history} />
               ))}
               {items.length === 0 && <EmptyState />}
@@ -246,6 +251,7 @@ export function BoardView({ entries, currentPhase, user, session, toggleVote, on
           isCategoryWinner={entry.votes === maxVotes && maxVotes > 0}
           onDrill={onDrill && PHASES[currentPhase].nextPhase ? () => onDrill(entry) : null}
           onSaveAction={onSaveAction && currentPhase === 3 ? () => onSaveAction(entry) : null}
+          isSavingAction={isSavingAction}
           history={history} />
       ))}
       {entries.length === 0 && <EmptyState />}
@@ -424,55 +430,6 @@ export function AdminControlTower({ store }) {
 
 // ── Genesis Table (Phase 4 Dashboard) ───────────────────────────────────────
 export function GenesisTable({ session, updateActionItem, isHost, onComplete }) {
-  const matrixRef = useRef(null);
-
-  const handleExportPNG = async () => {
-    if (!matrixRef.current) return;
-    try {
-      // Wait one paint to ensure no pending DOM updates, then clear any selection
-      await new Promise(resolve =>
-        typeof requestAnimationFrame === 'function'
-          ? requestAnimationFrame(resolve)
-          : setTimeout(resolve, 0)
-      );
-      window.getSelection()?.removeAllRanges();
-
-      const canvas = await html2canvas(matrixRef.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        // Skip textarea/input elements — html2canvas has a known Range.setEnd
-        // crash when measuring text nodes inside editable fields.
-        ignoreElements: (el) => el.tagName === 'TEXTAREA' || el.tagName === 'INPUT',
-      });
-      const filename = `retro-Lite_Actions_${new Date().toISOString().split('T')[0]}.png`;
-      if (typeof canvas.toBlob === 'function') {
-        canvas.toBlob((blob) => {
-          if (!blob) { toast.error('Export fehlgeschlagen: Canvas war leer.'); return; }
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.download = filename;
-          link.href = url;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-          toast.success('PNG erfolgreich exportiert ✓');
-        }, 'image/png');
-      } else {
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = canvas.toDataURL('image/png');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('PNG erfolgreich exportiert ✓');
-      }
-    } catch (err) {
-      console.error('[retro-Lite] PNG export failed:', err);
-      toast.error(`Export fehlgeschlagen: ${err.message}`);
-    }
-  };
 
   const actions = session?.sessionActionItems || [];
   const completedActions = actions.filter(a => a.done).length;
@@ -499,7 +456,7 @@ export function GenesisTable({ session, updateActionItem, isHost, onComplete }) 
         </div>
       </div>
 
-      <div ref={matrixRef} className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-50">
+      <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-50">
         <div className="px-12 py-10 bg-slate-50/50 border-b flex justify-between items-center">
           <div>
             <h2 className="font-black text-2xl tracking-tighter text-slate-800">Genesis Evolution Matrix</h2>
@@ -514,13 +471,6 @@ export function GenesisTable({ session, updateActionItem, isHost, onComplete }) 
                 <CheckSquare className="w-3.5 h-3.5" /> Retro abschließen
               </button>
             )}
-            <button
-              onClick={handleExportPNG}
-              className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-500 bg-white border border-slate-200 px-5 py-2.5 rounded-full hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all shadow-sm"
-              title="Export Matrix as PNG"
-            >
-              ↓ Export as PNG
-            </button>
             <div className="flex gap-3 bg-white p-2 rounded-full shadow-inner border border-slate-200">
               {['All', 'Pending', 'Done'].map(tab => (
                 <button key={tab} className={`px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${tab === 'All' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>{tab}</button>

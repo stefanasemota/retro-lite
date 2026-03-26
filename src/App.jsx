@@ -83,6 +83,7 @@ export default function App() {
   const [showNameModal, setShowNameModal] = useState(false);
   const [sessionName, setSessionName]     = useState('');
   const [isCreating, setIsCreating]       = useState(false);
+  const [isSavingAction, setIsSavingAction] = useState(false);
   
   // Signaling for BDD tests
   React.useEffect(() => {
@@ -123,15 +124,21 @@ export default function App() {
 
   const handleDrillInto = (entry) => {
     if (!store.isHost || !phase.nextPhase) return;
+    if (phase.nextPhase === 4) {
+      store.setManualPhase(4);
+      return;
+    }
     const newPath = [...store.drillPath, { parentId: entry.id, parentText: entry.text, phase: store.currentPhase }];
     store.setDrillPhase(phase.nextPhase, entry.id, newPath);
     setNewEntry('');
   };
 
-  const handleSaveActionItem = (entry) => {
+  const handleSaveActionItem = async (entry) => {
     if (!store.isHost) return;
+    setIsSavingAction(entry.id);
     const actionItem = buildActionItem(entry, store.drillPath, store.allEntries);
-    if (actionItem) store.saveActionItemAndReset(actionItem);
+    if (actionItem) await store.saveActionItemAndReset(actionItem);
+    setIsSavingAction(false);
   };
 
 
@@ -353,6 +360,7 @@ export default function App() {
                     categoryWinners={categoryWinners}
                     onDrill={store.isHost ? handleDrillInto : null} 
                     onSaveAction={store.isHost ? handleSaveActionItem : null}
+                    isSavingAction={isSavingAction}
                     history={store.session?.navigationHistory}
                     drillPath={store.drillPath}
                   />

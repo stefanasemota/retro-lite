@@ -72,7 +72,7 @@ describe('EntryCard', () => {
   });
 
   it('shows drilled indicator', () => {
-    render(<EntryCard entry={mockEntry} currentPhase={1} history={[{ id: 'e1' }]} />);
+    render(<EntryCard entry={mockEntry} currentPhase={1} session={{ sessionActionItems: [{ sourceEntryId: 'e1' }] }} />);
     expect(screen.getByTestId('drilled-pill')).toBeTruthy();
   });
 

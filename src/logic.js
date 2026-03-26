@@ -121,6 +121,7 @@ export function addActionItem(items, newItem) {
 export function buildActionItem(entry, drillPath, allEntries) {
   if (!entry) return null;
   const sourceAnchorText = drillPath?.[0]?.parentText || 'Unbekannt';
+  const sourceEntryId = drillPath?.[0]?.parentId || entry.id;
   const rootCatId = findRootCategory(entry, allEntries) || CATEGORIES[0].id;
   return {
     id: entry.id,
@@ -129,6 +130,7 @@ export function buildActionItem(entry, drillPath, allEntries) {
     who: 'To be assigned',
     when: 'TBD',
     sourceAnchorText,
+    sourceEntryId,
     categoryId: rootCatId,
   };
 }
