@@ -96,6 +96,7 @@ function RetroHistoryList({ history, onView, onDelete, onFetch, fetchFailed, onR
 export default function App() {
   const store = useRetroStore();
   const [newEntry, setNewEntry] = useState('');
+  const [joinCode, setJoinCode]   = useState('');
   const [activeCategory, setActiveCategory] = useState('liked');
   
   // Modal state
@@ -338,12 +339,15 @@ export default function App() {
                     id="join-input" 
                     data-testid="join-code-input" 
                     type="text" 
-                    placeholder="CODE" 
+                    placeholder="CODE"
+                    value={joinCode}
+                    onChange={e => setJoinCode(e.target.value.toUpperCase())}
+                    onKeyDown={e => e.key === 'Enter' && store.joinSession(joinCode)}
                     className="flex-1 w-full min-w-0 bg-transparent px-4 py-4 outline-none uppercase font-mono text-center text-3xl tracking-[0.4em] text-slate-800 placeholder-slate-300"
                   />
                   <button 
                     data-testid="btn-join-session" 
-                    onClick={() => store.joinSession(document.getElementById('join-input').value)} 
+                    onClick={() => store.joinSession(joinCode)} 
                     className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black shadow-md shadow-indigo-200 active:scale-95 transition-all"
                   >
                     GO

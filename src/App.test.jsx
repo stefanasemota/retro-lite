@@ -491,3 +491,62 @@ describe('components.jsx — ContextSidebar null drillPath guard', () => {
     expect(container.firstChild).toBeNull();
   });
 });
+
+// ── Bug fix: join-input controlled component ──────────────────────────────────
+
+describe('join-input controlled component — autofill safety', () => {
+  const baseStore = () => ({
+    loading: false, view: 'landing', session: null,
+    user: null, drillPath: [], error: null,
+    clearError: vi.fn(), loginAdmin: vi.fn(),
+  });
+
+  it('passes the typed value (not DOM value) to joinSession when GO is clicked', () => {
+    const joinSession = vi.fn();
+    useRetroStoreModule.useRetroStore.mockReturnValue({ ...baseStore(), joinSession });
+    render(<App />);
+
+    // Simulate user typing via React's onChange (the correct pathway)
+    fireEvent.change(screen.getByTestId('join-code-input'), { target: { value: 'abc123' } });
+    fireEvent.click(screen.getByTestId('btn-join-session'));
+
+    // Value should be uppercased from onChange handler
+    expect(joinSession).toHaveBeenCalledWith('ABC123');
+  });
+
+  it('passes the controlled state value when Enter is pressed (keyboard shortcut)', () => {
+    const joinSession = vi.fn();
+    useRetroStoreModule.useRetroStore.mockReturnValue({ ...baseStore(), joinSession });
+    render(<App />);
+
+    const input = screen.getByTestId('join-code-input');
+    fireEvent.change(input, { target: { value: 'xyz99' } });
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+    expect(joinSession).toHaveBeenCalledWith('XYZ99');
+  });
+
+  it('does NOT call joinSession with a stale DOM value if autofill bypasses onChange', () => {
+    // Autofill can set input.value without triggering React's synthetic onChange.
+    // The old getElementById approach would silently pick up that value.
+    // With controlled state, if onChange never fired, joinCode stays '' and
+    // joinSession is called with the empty string (joinSession itself guards against that).
+    const joinSession = vi.fn();
+    useRetroStoreModule.useRetroStore.mockReturnValue({ ...baseStore(), joinSession });
+    render(<App />);
+
+    const input = screen.getByTestId('join-code-input');
+
+    // Simulate autofill: mutate the DOM property directly WITHOUT firing onChange.
+    // This is the exact failure mode the bug introduced.
+    Object.defineProperty(input, 'value', { value: 'AUTOFILL', configurable: true });
+
+    // Click GO — with the old bug this would read 'AUTOFILL' from the DOM.
+    // With the fix, React state (still '') is used instead.
+    fireEvent.click(screen.getByTestId('btn-join-session'));
+
+    // joinSession is called with the React state value (''), not the DOM value.
+    expect(joinSession).toHaveBeenCalledWith('');
+    expect(joinSession).not.toHaveBeenCalledWith('AUTOFILL');
+  });
+});
