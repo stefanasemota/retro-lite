@@ -142,12 +142,20 @@ export default function App() {
     setNewEntry('');
   };
 
-  const handleDrillInto = (entry) => {
+  const handleDrillInto = async (entry) => {
     if (!store.isHost || !phase.nextPhase) return;
     if (phase.nextPhase === 4) {
-      // Path 1: Phase-4 shortcut — switch to Action-Items mode directly.
-      // Must also clear the textarea so stale input doesn't persist into Phase 4.
-      store.setManualPhase(4);
+      // Bug fix: "Massnahme Festlegen" must BUILD and SAVE the action item before
+      // advancing to Phase 4. Previously this called setManualPhase(4) which only
+      // changed currentPhase — sessionActionItems stayed empty and GenesisTable
+      // showed "0 actions". Now we write the item + phase in one atomic update.
+      const actionItem = buildActionItem(entry, store.drillPath, store.allEntries);
+      if (actionItem) {
+        await store.saveActionItemAndGoToPhase4(actionItem);
+      } else {
+        // Fallback (e.g. entry is null): just advance phase so the host isn't stuck.
+        store.setManualPhase(4);
+      }
       setNewEntry('');
       return;
     }

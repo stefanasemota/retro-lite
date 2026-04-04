@@ -359,6 +359,7 @@ describe('Path 1 — handleDrillInto Phase-4 shortcut + setNewEntry cleared', ()
       viewSession: vi.fn(),
       deleteSession: vi.fn(),
       saveActionItemAndReset: vi.fn(),
+      saveActionItemAndGoToPhase4: vi.fn().mockResolvedValue(),
       updateActionItem: vi.fn(),
     });
 
@@ -383,14 +384,11 @@ describe('Path 1 — handleDrillInto Phase-4 shortcut + setNewEntry cleared', ()
     expect(setDrillPhase).not.toHaveBeenCalled();
   });
 
-  it('Phase-4 shortcut: clicking drill-button in Phase 2 calls setManualPhase(4) when nextPhase is 4', () => {
-    // Simulate a custom phase config where nextPhase is 4 from Phase 2
-    // (achieved by mocking at the store level so currentPhase=2 but we assert setManualPhase)
+  it('Phase-4 shortcut: clicking drill-button in Phase 3 calls saveActionItemAndGoToPhase4 (bug fix)', async () => {
+    const saveActionItemAndGoToPhase4 = vi.fn().mockResolvedValue();
     const setManualPhase = vi.fn();
     const setDrillPhase  = vi.fn();
 
-    // We test it at integration level by making currentPhase=3 and clicking the drill button
-    // on a category winner card in a flat-list view (phase > 1).
     useRetroStoreModule.useRetroStore.mockReturnValue({
       loading: false,
       view: 'session',
@@ -406,6 +404,8 @@ describe('Path 1 — handleDrillInto Phase-4 shortcut + setNewEntry cleared', ()
       sessionId: 'YYY',
       setManualPhase,
       setDrillPhase,
+      saveActionItemAndGoToPhase4,
+      saveActionItemAndReset: vi.fn(),
       toggleVote: vi.fn(),
       toggleBlur: vi.fn(),
       leaveSession: vi.fn(),
@@ -419,16 +419,15 @@ describe('Path 1 — handleDrillInto Phase-4 shortcut + setNewEntry cleared', ()
     });
 
     render(<App />);
-    // In Phase 3 the drill button is replaced by the "save action" button on winners.
-    // Verify setDrillPhase is NOT called (Phase-4 shortcut prevents it).
-    // This test proves the overall setup works for the Phase-3→4 path.
     const btn = screen.queryByTestId('drill-button');
     if (btn) {
-      fireEvent.click(btn);
-      expect(setManualPhase).toHaveBeenCalledWith(4);
+      await act(async () => { fireEvent.click(btn); });
+      // BUG FIX: must call saveActionItemAndGoToPhase4 (builds + saves action item)
+      // NOT setManualPhase(4) which left sessionActionItems empty.
+      expect(saveActionItemAndGoToPhase4).toHaveBeenCalledTimes(1);
+      expect(setManualPhase).not.toHaveBeenCalledWith(4);
       expect(setDrillPhase).not.toHaveBeenCalled();
     } else {
-      // save-action-button rendered instead (correct Phase 3 behaviour)
       expect(screen.getByTestId('save-action-button')).toBeTruthy();
     }
   });

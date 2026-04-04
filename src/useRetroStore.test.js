@@ -945,3 +945,80 @@ describe('Path misc — viewSession + addEntry guard + toggleVote null-user guar
     expect(updateDoc).not.toHaveBeenCalled();
   });
 });
+
+// ── Bug fix: saveActionItemAndGoToPhase4 ──────────────────────────────────────
+
+describe('saveActionItemAndGoToPhase4 — Massnahme Festlegen fix', () => {
+  beforeEach(async () => {
+    Object.defineProperty(window, 'location', { value: { search: '' }, writable: true });
+    vi.clearAllMocks();
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementation((auth, cb) => {
+      cb({ uid: 'test-admin', email: 'stephan.asemota@gmail.com', isAnonymous: false });
+      return vi.fn();
+    });
+    const { onSnapshot } = await import('firebase/firestore');
+    onSnapshot.mockImplementation((ref, onNext) => {
+      if (ref.includes('entries')) onNext({ docs: [] });
+      else onNext({ exists: () => true, data: () => ({ id: '123', hostId: 'test-admin', currentPhase: 3, drillPath: [] }) });
+      return vi.fn();
+    });
+  });
+
+  it('TC-PHASE4-SAVE: writes sessionActionItems + currentPhase:4 in one updateDoc call', async () => {
+    const { updateDoc, onSnapshot } = await import('firebase/firestore');
+
+    // Give the session a realistic Phase-3 state
+    onSnapshot.mockImplementation((ref, onNext) => {
+      if (ref.includes('entries')) onNext({ docs: [] });
+      else onNext({
+        exists: () => true,
+        data: () => ({
+          id: '123', hostId: 'test-admin', currentPhase: 3,
+          drillPath: [{ parentId: 'a1', parentText: 'Firebase too slow', phase: 1 }],
+          sessionActionItems: [],
+        }),
+      });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.joinSession('123'); });
+    updateDoc.mockClear();
+
+    const actionItem = {
+      id: 'sol1', originalWhat: 'Add caching', what: 'Add caching',
+      who: 'To be assigned', when: 'TBD',
+      sourceAnchorText: 'Firebase too slow', sourceEntryId: 'a1', categoryId: 'liked',
+    };
+
+    await act(async () => { await result.current.saveActionItemAndGoToPhase4(actionItem); });
+
+    expect(updateDoc).toHaveBeenCalledTimes(1);
+    const payload = updateDoc.mock.calls[0][1];
+    // Must write action item AND phase 4 in the same call
+    expect(payload.currentPhase).toBe(4);
+    expect(payload.sessionActionItems).toBeDefined();
+  });
+
+  it('TC-PHASE4-NOHOST: non-host cannot call saveActionItemAndGoToPhase4', async () => {
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementation((auth, cb) => {
+      // Different uid to ensure isHost=false
+      cb({ uid: 'participant-uid', email: 'other@example.com', isAnonymous: false });
+      return vi.fn();
+    });
+    const { updateDoc } = await import('firebase/firestore');
+    updateDoc.mockClear();
+
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.saveActionItemAndGoToPhase4({ id: 'x', what: 'test' });
+    });
+
+    expect(updateDoc).not.toHaveBeenCalled();
+  });
+});

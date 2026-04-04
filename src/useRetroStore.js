@@ -395,6 +395,24 @@ export function useRetroStore() {
     }
   };
 
+  /**
+   * saveActionItemAndGoToPhase4 — used by "Massnahme Festlegen".
+   * Saves the action item AND advances to Phase 4 in a single atomic write,
+   * keeping the drillPath context visible in the breadcrumb.
+   */
+  const saveActionItemAndGoToPhase4 = async (item) => {
+    if (!isHost) return;
+    try {
+      await updateDoc(sessionRef(sessionId), {
+        sessionActionItems: arrayUnion(item),
+        currentPhase: 4,
+      });
+    } catch (err) {
+      console.error('[STORE] saveActionItemAndGoToPhase4 failed:', err);
+      setError(`Sync-Fehler: ${err.message}`);
+    }
+  };
+
   const updateActionItem = async (itemId, updates) => {
     if (!isHost) return;
     const items = session?.sessionActionItems || [];
@@ -496,7 +514,8 @@ export function useRetroStore() {
     loginAdmin, logout, joinSession, createSession, leaveSession,
     addEntry, toggleVote, toggleBlur, setDrillPhase,
     setManualPhase, jumpToHistory, completeRetro,
-    saveActionItemAndReset, updateActionItem, exportActionsToCSV,
+    saveActionItemAndReset, saveActionItemAndGoToPhase4,
+    updateActionItem, exportActionsToCSV,
     fetchRetroHistory, retryFetchHistory, deleteSession, viewSession,
   };
 }
