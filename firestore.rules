@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ────────────────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Server-side enforcement of the single authorised admin email.
+    // Mirrors the client-side ADMIN_EMAIL constant as a defense-in-depth layer.
+    function isAdmin() {
+      return isSignedIn() &&
+        request.auth.token.email == 'stephan.asemota@gmail.com';
+    }
+
+    // Verifies the caller is the document owner of the session (the host).
+    // Reads the session document — Firestore charges one read per evaluation.
+    function isSessionHost(appId, sessionId) {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/artifacts/$(appId)/public/data/sessions/$(sessionId))
+          .data.hostId == request.auth.uid;
+    }
+
+    // ── Session documents ───────────────────────────────────────────────────
+    match /artifacts/{appId}/public/data/sessions/{sessionId} {
+
+      // Any authenticated user (including anonymous participants) can read sessions.
+      allow read: if isSignedIn();
+
+      // Only the admin may create sessions. The hostId must match the caller's UID.
+      allow create: if isAdmin() &&
+        request.resource.data.hostId == request.auth.uid;
+
+      // Only the session host may update sessions.
+      // Covers: currentPhase, drillPath, focusId, isBlurred, timer, sessionActionItems, etc.
+      allow update: if isSessionHost(appId, sessionId);
+
+      // Only the admin may delete sessions.
+      allow delete: if isAdmin();
+
+      // ── Entries sub-collection ────────────────────────────────────────────
+      match /entries/{entryId} {
+
+        // Any authenticated user can read entries.
+        allow read: if isSignedIn();
+
+        // Any authenticated user may create an entry (post a sticky note).
+        // userId must match the caller so entries cannot be forged.
+        allow create: if isSignedIn() &&
+          request.resource.data.userId == request.auth.uid;
+
+        // Any authenticated user may:
+        //   a) edit their own entry text, or
+        //   b) update ONLY the votes/voters fields (upvoting another person's card).
+        // The votingInFlightRef in the client provides the double-click optimistic lock.
+        allow update: if isSignedIn() && (
+          resource.data.userId == request.auth.uid ||
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['votes', 'voters'])
+        );
+
+        // Only the session host may delete entries (moderation).
+        allow delete: if isSessionHost(appId, sessionId);
+      }
+    }
+
+    // ── Deny everything else ────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
