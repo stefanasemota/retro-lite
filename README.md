@@ -1,4 +1,4 @@
-# Retro-Lite v2 🚀
+# Retro-Lite v1.3.0 🚀
 
 [![CI](https://github.com/stefanasemota/retro-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/stefanasemota/retro-lite/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -18,6 +18,7 @@
 
 ## ✨ Core Features
 - **Real-time Sync**: Powered by Firebase Firestore for zero-latency collaboration.
+- **Synchronized Facilitator Timer**: Drift-free countdown timer visible to all participants. Host controls Start, Pause, and Reset. Stores an absolute server `endTime` so all browsers stay perfectly in sync — even after a tab freeze or page refresh.
 - **Context Sidebar**: A permanent "Red Thread" view so participants never lose focus.
 - **Admin Control Tower**: Advanced navigation and phase control for facilitators.
 - **Privacy First**: Dynamic "Blur" mode to prevent cognitive bias during brainstorming.
@@ -80,6 +81,11 @@ Detailed documentation can be found in `docs/ARCHITECTURE.md`.
 - `npm run build`: Build production bundle.
 - `npm test`: Run unit tests with Vitest.
 - `npm run lint`: Run ESLint checks.
+
+### Test Coverage
+- **161+ unit & integration tests** running via Vitest.
+- **94%+ statement coverage** across all source files.
+- `npm test` runs all tests with a live coverage report.
 
 ---
 

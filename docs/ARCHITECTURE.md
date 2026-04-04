@@ -31,6 +31,21 @@ Admins (Hosts) have specialized UI to:
 - `navigationHistory`: Registry of all visited discussion nodes.
 - `isBlurred`: Privacy toggle.
 
+- `sessionActionItems`: Array of committed action items with `{ id, originalWhat, what, who, when, sourceAnchorText, categoryId }`.
+- `timer`: Facilitator Timer object — `{ status, duration, endTime }` (see Timer State below).
+
+### Timer State (`session.timer`)
+
+The timer uses an **absolute-endTime strategy** to avoid drift across clients:
+
+| Field | Type | Values | Description |
+|-------|------|--------|-------------|
+| `timer.status` | String | `active` \| `paused` \| `reset` | Current timer state |
+| `timer.duration` | Number | Seconds ≥ 0 | Total seconds set by host **or** remaining seconds when paused |
+| `timer.endTime` | Number \| null | Unix ms timestamp | Absolute point in time when the timer will reach zero. `null` when not active |
+
+**Drift-free sync strategy:** Instead of decrementing a counter on each client, the store writes `endTime = Date.now() + duration * 1000` when the host starts the timer. Each client recalculates `remaining = Math.max(0, ceil((endTime - Date.now()) / 1000))` every 500 ms locally. This means late-joining participants and users who refresh instantly see the correct remaining time.
+
 ### Entries
 - `parentId`: Links the entry to its predecessor in the hierarchy.
 - `votes`: Number of upvotes.

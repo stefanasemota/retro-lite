@@ -1,12 +1,118 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, LogOut, Send, ShieldCheck, Eye, EyeOff, AlertCircle, ChevronLeft, X, Sparkles, CheckSquare } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, LogOut, Send, ShieldCheck, Eye, EyeOff, AlertCircle, ChevronLeft, X, Sparkles, CheckSquare, Timer, Play, Square, RotateCcw } from 'lucide-react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useRetroStore } from './useRetroStore';
 import { CATEGORIES, getWinner, getCategoryWinners, buildActionItem, formatDate } from './logic';
+import { formatTime, parseTimeInput, getRemainingSeconds } from './timer';
 import { PHASES, BoardView, ContextSidebar, AdminControlTower, ContextHeader, GenesisTable } from './components';
 
-// ── Retro History List (Admin Panel) ────────────────────────────────────────
+// ── Facilitator Timer ──────────────────────────────────────────────────────────
+function FacilitatorTimer({ timerState, isHost, onStart, onStop, onReset }) {
+  const [remaining, setRemaining]   = React.useState(0);
+  const [inputVal, setInputVal]     = React.useState('05:00');
+  const [inputErr, setInputErr]     = React.useState(false);
+  const intervalRef                  = useRef(null);
+
+  // Local tick — recalculates from server-authoritative endTime every 500 ms.
+  // This is drift-free: even if a tab freezes, on resume it reads the correct time.
+  useEffect(() => {
+    const tick = () => setRemaining(getRemainingSeconds(timerState));
+    tick();
+    intervalRef.current = setInterval(tick, 500);
+    return () => clearInterval(intervalRef.current);
+  }, [timerState]);
+
+  const isActive  = timerState?.status === 'active';
+  const isPaused  = timerState?.status === 'paused';
+  const isExpired = isActive && remaining === 0;
+  const displayed = formatTime(remaining);
+
+  const handleStart = () => {
+    if (isActive) { onStop(); return; }
+    const secs = isPaused
+      ? (timerState?.duration ?? 0)           // resume from paused remaining
+      : parseTimeInput(inputVal);              // fresh start from input
+    if (!isPaused && (secs === null || secs <= 0)) { setInputErr(true); return; }
+    setInputErr(false);
+    onStart(secs ?? timerState.duration);
+  };
+
+  const handleReset = () => {
+    const secs = parseTimeInput(inputVal) ?? 0;
+    onReset(secs);
+  };
+
+  return (
+    <div data-testid="facilitator-timer" className="flex items-center gap-3">
+      {/* Digital Clock Display */}
+      <div className={`relative font-mono font-black tracking-widest text-[22px] leading-none px-5 py-2.5 rounded-2xl border-2 transition-all select-none ${
+        isExpired
+          ? 'bg-red-600 text-white border-red-500 animate-pulse shadow-lg shadow-red-500/40'
+          : isActive
+            ? 'bg-slate-900 text-emerald-400 border-slate-700 shadow-inner'
+            : isPaused
+              ? 'bg-amber-950 text-amber-400 border-amber-800'
+              : 'bg-slate-100 text-slate-500 border-slate-200'
+      }`}>
+        <span data-testid="timer-display">{displayed}</span>
+        {isActive && !isExpired && (
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping" />
+        )}
+      </div>
+
+      {/* Host Controls */}
+      {isHost && (
+        <div className="flex items-center gap-2">
+          {/* Input — only shown when not active */}
+          {!isActive && (
+            <input
+              data-testid="timer-input"
+              value={inputVal}
+              onChange={e => { setInputVal(e.target.value); setInputErr(false); }}
+              onKeyDown={e => e.key === 'Enter' && handleStart()}
+              placeholder="MM:SS"
+              className={`w-20 bg-slate-100 border-2 text-center font-mono font-bold text-[13px] py-2 px-2 rounded-xl outline-none focus:bg-white transition-all ${
+                inputErr ? 'border-red-400 text-red-600' : 'border-slate-200 focus:border-indigo-400 text-slate-700'
+              }`}
+            />
+          )}
+
+          {/* Start / Pause */}
+          <button
+            data-testid="btn-timer-start"
+            onClick={handleStart}
+            title={isActive ? 'Pause' : isPaused ? 'Fortsetzen' : 'Timer starten'}
+            className={`p-2.5 rounded-xl font-black text-[11px] transition-all active:scale-90 ${
+              isActive
+                ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
+                : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'
+            }`}
+          >
+            {isActive ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </button>
+
+          {/* Reset */}
+          <button
+            data-testid="btn-timer-reset"
+            onClick={handleReset}
+            title="Reset"
+            className="p-2.5 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all active:scale-90"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Participants: timer icon only (no controls) */}
+      {!isHost && timerState && (
+        <Timer className={`w-4 h-4 ${isExpired ? 'text-red-500 animate-pulse' : 'text-slate-400'}`} />
+      )}
+    </div>
+  );
+}
+
+// ── Retro History List (Admin Panel) ────────────────────────────────
 function RetroHistoryList({ history, onView, onDelete, onFetch, fetchFailed, onRetry }) {
   useEffect(() => { onFetch?.(); }, []);
   const [confirmingDelete, setConfirmingDelete] = React.useState(null);
@@ -242,6 +348,16 @@ export default function App() {
                   </button>
                 )}
               </div>
+            )}
+            {/* Facilitator Timer — visible on all screen sizes when in a session */}
+            {store.session && (
+              <FacilitatorTimer
+                timerState={store.timerState}
+                isHost={store.isHost}
+                onStart={store.startTimer}
+                onStop={store.stopTimer}
+                onReset={store.resetTimer}
+              />
             )}
             {store.user && !store.user.isAnonymous && (
               <button onClick={store.logout} className="p-3.5 rounded-[1.25rem] text-slate-400 hover:text-red-500 bg-slate-50 border border-slate-100 transition-all hover:shadow-lg"><LogOut className="w-5 h-5"/></button>

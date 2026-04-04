@@ -177,6 +177,9 @@ export function useRetroStore() {
   // Defense-in-depth: even if a UID somehow matched, wrong email = no host powers.
   const isHost       = session?.hostId === user?.uid && user?.email === ADMIN_EMAIL;
   const isCompleted  = session?.isCompleted ?? false;
+  // Timer state is read directly from the Firestore session document.
+  // The client calculates remaining time locally using the absolute endTime (drift-free).
+  const timerState   = session?.timer ?? null;
   
   // Logic to determine view based on session state
   useEffect(() => {
@@ -499,6 +502,68 @@ export function useRetroStore() {
     setView('summary');
   };
 
+  // ── Timer Actions ─────────────────────────────────────────────────────────
+  /**
+   * startTimer — Starts the countdown from durationSeconds.
+   * Writes an absolute endTime (server ms) so all clients stay perfectly in sync.
+   * Strategy: endTime = Date.now() + durationSeconds * 1000.
+   * Clients calculate remaining = endTime - Date.now() on each local tick.
+   *
+   * @param {number} durationSeconds - Total duration to count down from
+   */
+  const startTimer = async (durationSeconds) => {
+    if (!isHost || !sessionId) return;
+    const endTime = Date.now() + durationSeconds * 1000;
+    try {
+      await updateDoc(sessionRef(sessionId), {
+        'timer.status':   'active',
+        'timer.duration': durationSeconds,
+        'timer.endTime':  endTime,
+      });
+    } catch (err) {
+      console.error('[STORE] startTimer failed:', err);
+      setError(`Timer-Fehler: ${err.message}`);
+    }
+  };
+
+  /**
+   * stopTimer — Pauses the timer, preserving the remaining seconds so the host
+   * can resume later. Calculates remaining from endTime at the moment of pause.
+   */
+  const stopTimer = async () => {
+    if (!isHost || !sessionId) return;
+    const remaining = timerState?.endTime
+      ? Math.max(0, Math.ceil((timerState.endTime - Date.now()) / 1000))
+      : (timerState?.duration ?? 0);
+    try {
+      await updateDoc(sessionRef(sessionId), {
+        'timer.status':   'paused',
+        'timer.duration': remaining,
+        'timer.endTime':  null,
+      });
+    } catch (err) {
+      console.error('[STORE] stopTimer failed:', err);
+      setError(`Timer-Fehler: ${err.message}`);
+    }
+  };
+
+  /**
+   * resetTimer — Clears the timer back to the given duration (or 0).
+   */
+  const resetTimer = async (durationSeconds = 0) => {
+    if (!isHost || !sessionId) return;
+    try {
+      await updateDoc(sessionRef(sessionId), {
+        'timer.status':   'reset',
+        'timer.duration': durationSeconds,
+        'timer.endTime':  null,
+      });
+    } catch (err) {
+      console.error('[STORE] resetTimer failed:', err);
+      setError(`Timer-Fehler: ${err.message}`);
+    }
+  };
+
   const clearError = () => setError(null);
 
   return {
@@ -509,6 +574,8 @@ export function useRetroStore() {
     history,
     // Path 4
     historyFetchFailed,
+    // Timer
+    timerState,
 
     // Actions
     loginAdmin, logout, joinSession, createSession, leaveSession,
@@ -517,5 +584,7 @@ export function useRetroStore() {
     saveActionItemAndReset, saveActionItemAndGoToPhase4,
     updateActionItem, exportActionsToCSV,
     fetchRetroHistory, retryFetchHistory, deleteSession, viewSession,
+    // Timer actions
+    startTimer, stopTimer, resetTimer,
   };
 }

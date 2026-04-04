@@ -549,3 +549,82 @@ describe('join-input controlled component — autofill safety', () => {
     expect(joinSession).not.toHaveBeenCalledWith('AUTOFILL');
   });
 });
+
+// ── FacilitatorTimer integration (BDD Scenarios 1, 5) ───────────────────────
+
+describe('FacilitatorTimer component integration', () => {
+  function sessionStore(overrides = {}) {
+    return {
+      loading: false, view: 'session', error: null,
+      currentPhase: 1,
+      session: { sessionId: 'T1', sessionActionItems: [], navigationHistory: [], timer: null },
+      displayEntries: [], allEntries: [], drillPath: [], focusId: null,
+      user: { uid: 'host', isAnonymous: false },
+      isHost: true,
+      sessionId: 'T1',
+      historyFetchFailed: false,
+      history: [],
+      toggleVote: vi.fn(), toggleBlur: vi.fn(), leaveSession: vi.fn(),
+      clearError: vi.fn(), fetchRetroHistory: vi.fn(), retryFetchHistory: vi.fn(),
+      viewSession: vi.fn(), deleteSession: vi.fn(),
+      setManualPhase: vi.fn(), setDrillPhase: vi.fn(),
+      addEntry: vi.fn(), jumpToHistory: vi.fn(),
+      saveActionItemAndReset: vi.fn(), saveActionItemAndGoToPhase4: vi.fn(),
+      updateActionItem: vi.fn(),
+      startTimer: vi.fn(), stopTimer: vi.fn(), resetTimer: vi.fn(),
+      timerState: null,
+      ...overrides,
+    };
+  }
+
+  it('BDD-S1: renders timer display showing 00:00:00 when timerState is null', () => {
+    useRetroStoreModule.useRetroStore.mockReturnValue(sessionStore());
+    render(<App />);
+    expect(screen.getByTestId('timer-display').textContent).toBe('00:00:00');
+  });
+
+  it('BDD-S1: shows Start and Reset buttons for the host', () => {
+    useRetroStoreModule.useRetroStore.mockReturnValue(sessionStore());
+    render(<App />);
+    expect(screen.getByTestId('btn-timer-start')).toBeTruthy();
+    expect(screen.getByTestId('btn-timer-reset')).toBeTruthy();
+  });
+
+  it('BDD-S5: hides Start/Reset buttons from participants (non-host)', () => {
+    useRetroStoreModule.useRetroStore.mockReturnValue(
+      sessionStore({ isHost: false, user: { uid: 'p1', isAnonymous: true } })
+    );
+    render(<App />);
+    expect(screen.queryByTestId('btn-timer-start')).toBeNull();
+    expect(screen.queryByTestId('btn-timer-reset')).toBeNull();
+  });
+
+  it('BDD-S1: host clicking Start calls startTimer with parsed seconds', async () => {
+    const startTimer = vi.fn();
+    useRetroStoreModule.useRetroStore.mockReturnValue(sessionStore({ startTimer }));
+    render(<App />);
+    // Default input is "05:00" → 300 seconds
+    await act(async () => { fireEvent.click(screen.getByTestId('btn-timer-start')); });
+    expect(startTimer).toHaveBeenCalledWith(300);
+  });
+
+  it('BDD-S4: host clicking Reset calls resetTimer with parsed seconds', async () => {
+    const resetTimer = vi.fn();
+    useRetroStoreModule.useRetroStore.mockReturnValue(sessionStore({ resetTimer }));
+    render(<App />);
+    await act(async () => { fireEvent.click(screen.getByTestId('btn-timer-reset')); });
+    expect(resetTimer).toHaveBeenCalledWith(300); // 05:00 default input
+  });
+
+  it('BDD-S2: displays active timer remaining from timerState', () => {
+    const now = Date.now();
+    useRetroStoreModule.useRetroStore.mockReturnValue(sessionStore({
+      timerState: { status: 'active', duration: 120, endTime: now + 61000 },
+    }));
+    render(<App />);
+    // Should display roughly 61 seconds remaining (00:01:01)
+    // Accept ±1s window due to render timing
+    const display = screen.getByTestId('timer-display').textContent;
+    expect(['00:01:01', '00:01:02']).toContain(display);
+  });
+});
