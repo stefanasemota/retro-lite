@@ -498,7 +498,7 @@ export default function App() {
           ) : (
             <div className="space-y-12 w-full">
               {store.view === 'summary' || store.currentPhase === 4 ? (
-                <GenesisTable session={store.session} updateActionItem={store.updateActionItem} isHost={store.isHost} onComplete={() => { store.exportActionsToCSV(); store.completeRetro(); }} />
+                <GenesisTable session={store.session} updateActionItem={store.updateActionItem} isHost={store.isHost} onComplete={() => { store.exportActionsToCSV(); store.completeRetro(); }} onExportJira={store.exportToJiraCSV} />
               ) : (
                 <>
                   {/* Board Feed */}

@@ -2,7 +2,7 @@
 import React, { useRef } from 'react';
 import { toast } from 'react-toastify';
 import html2canvas from 'html2canvas';
-import { ThumbsUp, Trophy, Search, Lightbulb, CheckSquare, ClipboardList, Settings, Activity, History, LayoutList, Clock, User } from 'lucide-react';
+import { ThumbsUp, Trophy, Search, Lightbulb, CheckSquare, ClipboardList, Settings, Activity, History, LayoutList, Clock, User, Download } from 'lucide-react';
 
 import { CATEGORIES, PHASE_CONFIG, findRootCategory } from './logic';
 
@@ -429,7 +429,7 @@ export function AdminControlTower({ store }) {
 }
 
 // ── Genesis Table (Phase 4 Dashboard) ───────────────────────────────────────
-export function GenesisTable({ session, updateActionItem, isHost, onComplete }) {
+export function GenesisTable({ session, updateActionItem, isHost, onComplete, onExportJira }) {
 
   const actions = session?.sessionActionItems || [];
   const completedActions = actions.filter(a => a.done).length;
@@ -463,6 +463,16 @@ export function GenesisTable({ session, updateActionItem, isHost, onComplete }) 
             <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mt-1">TEAM COMMITMENT TRACKER</p>
           </div>
           <div className="flex items-center gap-4">
+            {isHost && onExportJira && (
+              <button
+                data-testid="btn-export-jira"
+                onClick={onExportJira}
+                title="Jira/ClickUp-kompatibles CSV herunterladen"
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-full text-[11px] uppercase font-black tracking-widest transition-all shadow-md shadow-indigo-900/20 active:scale-95 animate-in fade-in duration-500"
+              >
+                <Download className="w-3.5 h-3.5" /> Download CSV for Backlog
+              </button>
+            )}
             {isHost && onComplete && (
               <button 
                 onClick={onComplete}

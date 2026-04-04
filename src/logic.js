@@ -156,6 +156,51 @@ export function buildCSVContent(actions) {
   ];
   return 'data:text/csv;charset=utf-8,\uFEFF' + rows.map(e => e.join(',')).join('\n');
 }
+/**
+ * buildJiraCSV - Generates a Jira/ClickUp-compatible CSV import string.
+ *
+ * Column mapping:
+ *   Summary      → The Massnahme text (what)
+ *   Description  → Retro date, team name, and a Retro-Lite attribution note
+ *   Issue Type   → Hardcoded "Story" (also accepted by ClickUp's CSV importer)
+ *   Priority     → Default "Medium"
+ *   Labels       → "retro-lite" for easy Jira/ClickUp filtering after import
+ *
+ * RFC-4180 escaping: every data cell is wrapped in double-quotes; internal
+ * double-quotes are doubled (""). This ensures a Massnahme containing a comma
+ * (e.g. "Discuss architecture, then decide") imports as a single Summary cell.
+ *
+ * @param {Array}  actions     - sessionActionItems array
+ * @param {string} sessionName - Session/team name for the Description field
+ * @param {string} date        - Human-readable date string (e.g. "04.04.2026")
+ * @returns {string|null}      - CSV data-URI string, or null if actions is empty
+ */
+export function buildJiraCSV(actions, sessionName = 'Retro-Lite', date = '') {
+  if (!actions || actions.length === 0) return null;
+
+  const esc = val => `"${String(val ?? '').replace(/"/g, '""')}"`;
+
+  const header = ['Summary', 'Description', 'Issue Type', 'Priority', 'Labels'];
+
+  const makeDescription = (a) =>
+    `Retro: ${date}, Team: ${sessionName}. ` +
+    `Ursprung: ${a.sourceAnchorText ?? 'Unbekannt'}. ` +
+    `Erstellt via Retro-Lite.`;
+
+  const rows = actions.map(a => [
+    esc(a.what ?? a.originalWhat ?? ''),
+    esc(makeDescription(a)),
+    esc('Story'),
+    esc('Medium'),
+    esc('retro-lite'),
+  ]);
+
+  return (
+    'data:text/csv;charset=utf-8,\uFEFF' +
+    [header, ...rows].map(r => r.join(',')).join('\n')
+  );
+}
+
 
 /**
  * buildNavigationHistoryUpdate - Determines the new navigationHistory for setDrillPhase.

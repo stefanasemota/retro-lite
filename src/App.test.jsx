@@ -628,3 +628,59 @@ describe('FacilitatorTimer component integration', () => {
     expect(['00:01:01', '00:01:02']).toContain(display);
   });
 });
+
+// ── BDD: Jira/ClickUp CSV export button ───────────────────────────────────────
+
+describe('BDD: Jira/ClickUp CSV export (GenesisTable — Phase 4)', () => {
+  function phase4Store(overrides = {}) {
+    return {
+      loading: false, view: 'session', error: null,
+      currentPhase: 4,
+      session: {
+        sessionId: 'X1', sessionName: 'Team Alpha', sessionActionItems: [
+          { id: 'a1', what: 'Add caching', originalWhat: 'Add caching', sourceAnchorText: 'Slow API', who: 'Stefan', when: '2026-04-15' },
+          { id: 'a2', what: 'Fix auth',   originalWhat: 'Fix auth',   sourceAnchorText: 'Login bug', who: 'Anna', when: 'TBD' },
+          { id: 'a3', what: 'Update docs', originalWhat: 'Update docs', sourceAnchorText: 'Unclear', who: 'Max', when: '2026-04-20' },
+        ],
+        navigationHistory: [],
+      },
+      displayEntries: [], allEntries: [], drillPath: [], focusId: null,
+      user: { uid: 'host', isAnonymous: false },
+      isHost: true, sessionId: 'X1',
+      historyFetchFailed: false, history: [], timerState: null,
+      toggleVote: vi.fn(), toggleBlur: vi.fn(), leaveSession: vi.fn(),
+      clearError: vi.fn(), fetchRetroHistory: vi.fn(), retryFetchHistory: vi.fn(),
+      viewSession: vi.fn(), deleteSession: vi.fn(),
+      setManualPhase: vi.fn(), setDrillPhase: vi.fn(),
+      jumpToHistory: vi.fn(), addEntry: vi.fn(),
+      saveActionItemAndReset: vi.fn(), saveActionItemAndGoToPhase4: vi.fn(),
+      updateActionItem: vi.fn(),
+      exportActionsToCSV: vi.fn(), exportToJiraCSV: vi.fn(),
+      completeRetro: vi.fn(),
+      startTimer: vi.fn(), stopTimer: vi.fn(), resetTimer: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it('BDD-S1: renders "Download CSV for Backlog" button in Phase 4 for host', () => {
+    useRetroStoreModule.useRetroStore.mockReturnValue(phase4Store());
+    render(<App />);
+    expect(screen.getByTestId('btn-export-jira')).toBeTruthy();
+  });
+
+  it('BDD-S1: clicking the button calls exportToJiraCSV', async () => {
+    const exportToJiraCSV = vi.fn();
+    useRetroStoreModule.useRetroStore.mockReturnValue(phase4Store({ exportToJiraCSV }));
+    render(<App />);
+    await act(async () => { fireEvent.click(screen.getByTestId('btn-export-jira')); });
+    expect(exportToJiraCSV).toHaveBeenCalledTimes(1);
+  });
+
+  it('BDD-S6: "Download CSV for Backlog" button is NOT visible to participants', () => {
+    useRetroStoreModule.useRetroStore.mockReturnValue(
+      phase4Store({ isHost: false, user: { uid: 'p1', isAnonymous: true } })
+    );
+    render(<App />);
+    expect(screen.queryByTestId('btn-export-jira')).toBeNull();
+  });
+});

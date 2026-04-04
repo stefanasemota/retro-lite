@@ -14,7 +14,7 @@ import {
 } from 'firebase/firestore';
 import {
   filterEntries, updateHistory, calculateCurrentPhase,
-  buildCSVContent, buildNavigationHistoryUpdate,
+  buildCSVContent, buildJiraCSV, buildNavigationHistoryUpdate,
 } from './logic';
 
 // ── Firebase Init ────────────────────────────────────────────────────────────
@@ -443,6 +443,26 @@ export function useRetroStore() {
   };
 
   /**
+   * exportToJiraCSV — Generates and downloads a Jira/ClickUp-compatible CSV.
+   * Uses buildJiraCSV (pure, tested separately) for CSV generation.
+   * File name: retro-export-YYYY-MM-DD.csv (as specified in the requirements).
+   */
+  const exportToJiraCSV = () => {
+    const actions = session?.sessionActionItems || [];
+    const sessionName = session?.sessionName ?? 'Retro-Lite';
+    const date = new Date().toLocaleDateString('de-DE'); // e.g. "04.04.2026"
+    const csvContent = buildJiraCSV(actions, sessionName, date);
+    if (!csvContent) return;
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `retro-export-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  /**
    * fetchRetroHistory — loads all completed sessions ordered newest first.
    * NOTE: requires a Firestore composite index on (isCompleted ASC, createdAt DESC).
    * If missing, Firestore will log the creation URL in the browser console.
@@ -582,7 +602,7 @@ export function useRetroStore() {
     addEntry, toggleVote, toggleBlur, setDrillPhase,
     setManualPhase, jumpToHistory, completeRetro,
     saveActionItemAndReset, saveActionItemAndGoToPhase4,
-    updateActionItem, exportActionsToCSV,
+    updateActionItem, exportActionsToCSV, exportToJiraCSV,
     fetchRetroHistory, retryFetchHistory, deleteSession, viewSession,
     // Timer actions
     startTimer, stopTimer, resetTimer,
