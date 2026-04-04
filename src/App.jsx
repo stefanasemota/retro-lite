@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Impressum from './pages/Impressum';
+import Privacy   from './pages/Privacy';
 import { Plus, LogOut, Send, ShieldCheck, Eye, EyeOff, AlertCircle, ChevronLeft, X, Sparkles, CheckSquare, Timer, Play, Square, RotateCcw } from 'lucide-react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -6,6 +8,50 @@ import { useRetroStore } from './useRetroStore';
 import { CATEGORIES, getWinner, getCategoryWinners, buildActionItem, formatDate } from './logic';
 import { formatTime, parseTimeInput, getRemainingSeconds } from './timer';
 import { PHASES, BoardView, ContextSidebar, AdminControlTower, ContextHeader, GenesisTable } from './components';
+
+// ── SPA Routing ───────────────────────────────────────────────────────────
+function usePath() {
+  const [path, setPath] = React.useState(() => window.location.pathname);
+  React.useEffect(() => {
+    const onPop = () => setPath(window.location.pathname);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+  const navigate = React.useCallback((to) => {
+    window.history.pushState({}, '', to);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, []);
+  return { path, navigate };
+}
+
+// ── Global Footer ───────────────────────────────────────────────────────────
+function AppFooter({ onNavigate }) {
+  const year = new Date().getFullYear();
+  return (
+    <footer className="mt-auto border-t border-slate-100 bg-white/60 backdrop-blur-xl py-5 px-8">
+      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] font-semibold text-slate-400">
+        <span>© {year} Stefan Asemota · sabiai.work · Retro-Lite v1.3.0</span>
+        <nav className="flex items-center gap-5">
+          <button
+            data-testid="footer-link-impressum"
+            onClick={() => onNavigate('/impressum')}
+            className="hover:text-indigo-600 transition-colors uppercase tracking-widest font-black"
+          >
+            Impressum
+          </button>
+          <span className="text-slate-200">|</span>
+          <button
+            data-testid="footer-link-privacy"
+            onClick={() => onNavigate('/privacy')}
+            className="hover:text-indigo-600 transition-colors uppercase tracking-widest font-black"
+          >
+            Datenschutz
+          </button>
+        </nav>
+      </div>
+    </footer>
+  );
+}
 
 // ── Facilitator Timer ──────────────────────────────────────────────────────────
 function FacilitatorTimer({ timerState, isHost, onStart, onStop, onReset }) {
@@ -201,6 +247,7 @@ function RetroHistoryList({ history, onView, onDelete, onFetch, fetchFailed, onR
 
 export default function App() {
   const store = useRetroStore();
+  const { path, navigate } = usePath();
   const [newEntry, setNewEntry] = useState('');
   const [joinCode, setJoinCode]   = useState('');
   const [activeCategory, setActiveCategory] = useState('liked');
@@ -280,6 +327,10 @@ export default function App() {
 
 
   // ── Render ───────────────────────────────────────────────────────────────
+  // Public static pages — no auth required
+  if (path === '/impressum') return <Impressum onNavigate={navigate} />;
+  if (path === '/privacy')   return <Privacy   onNavigate={navigate} />;
+
   if (store.loading) {
     return <div className="h-screen flex items-center justify-center bg-indigo-50 text-indigo-600 font-bold">retro-Lite Engine startet…</div>;
   }
@@ -541,6 +592,7 @@ export default function App() {
           </div>
         </div>
       )}
+      <AppFooter onNavigate={navigate} />
     </div>
   );
 }
