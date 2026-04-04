@@ -2,6 +2,11 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useRetroStore } from './useRetroStore';
 
+// Mock react-toastify at the top level so toast.error/success are vi.fn() throughout.
+vi.mock('react-toastify', () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
+
 // Mock Firebase
 vi.mock('firebase/app', () => ({
   initializeApp: vi.fn(),
@@ -720,5 +725,223 @@ describe('fetchRetroHistory', () => {
     await act(async () => { await result.current.deleteSession('X1'); });
     expect(result.current.history.find(s => s.id === 'X1')).toBeUndefined();
     expect(result.current.history).toHaveLength(1);
+  });
+});
+
+// ── New coverage: four high-risk paths ────────────────────────────────────────
+
+describe('Path 4 — fetchRetroHistory failure + historyFetchFailed flag', () => {
+  beforeEach(async () => {
+    Object.defineProperty(window, 'location', { value: { search: '' }, writable: true });
+    vi.clearAllMocks();
+    // Restore default auth + snapshot mocks that clearAllMocks() wipes.
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementation((auth, cb) => {
+      cb({ uid: 'test-admin', email: 'stephan.asemota@gmail.com', isAnonymous: false });
+      return vi.fn();
+    });
+    const { onSnapshot } = await import('firebase/firestore');
+    onSnapshot.mockImplementation((ref, onNext) => {
+      if (ref.includes('entries')) onNext({ docs: [] });
+      else onNext({ exists: () => true, data: () => ({ id: '123', hostId: 'test-admin', currentPhase: 1, drillPath: [] }) });
+      return vi.fn();
+    });
+  });
+
+  it('TC-FRH-FAIL: sets historyFetchFailed=true and error when getDocs throws', async () => {
+    const { getDocs } = await import('firebase/firestore');
+    getDocs.mockRejectedValueOnce(new Error('Firestore unavailable'));
+
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => { await result.current.fetchRetroHistory(); });
+
+    expect(result.current.historyFetchFailed).toBe(true);
+    expect(result.current.error).toContain('Fehler beim Laden der Session-Historie.');
+  });
+
+  it('TC-FRH-RETRY: retryFetchHistory resets flag and re-fetches successfully', async () => {
+    const { getDocs } = await import('firebase/firestore');
+    getDocs.mockRejectedValueOnce(new Error('Timeout'));
+    getDocs.mockResolvedValueOnce({
+      docs: [{ id: 'R1', data: () => ({ sessionName: 'Recovered Sprint', isCompleted: true }) }],
+    });
+
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => { await result.current.fetchRetroHistory(); });
+    expect(result.current.historyFetchFailed).toBe(true);
+
+    await act(async () => { await result.current.retryFetchHistory(); });
+    expect(result.current.historyFetchFailed).toBe(false);
+    expect(result.current.history).toHaveLength(1);
+    expect(result.current.history[0].id).toBe('R1');
+  });
+});
+
+describe('Path 2 — deleteSession rollback on Firestore rejection', () => {
+  beforeEach(async () => {
+    Object.defineProperty(window, 'location', { value: { search: '' }, writable: true });
+    vi.clearAllMocks();
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementation((auth, cb) => {
+      cb({ uid: 'test-admin', email: 'stephan.asemota@gmail.com', isAnonymous: false });
+      return vi.fn();
+    });
+    const { onSnapshot } = await import('firebase/firestore');
+    onSnapshot.mockImplementation((ref, onNext) => {
+      if (ref.includes('entries')) onNext({ docs: [] });
+      else onNext({ exists: () => true, data: () => ({ id: '123', hostId: 'test-admin', currentPhase: 1, drillPath: [] }) });
+      return vi.fn();
+    });
+  });
+
+  it('TC-DEL-ROLLBACK: re-fetches history from Firestore when deleteDoc rejects', async () => {
+    const { deleteDoc, getDocs, onSnapshot } = await import('firebase/firestore');
+    const { onAuthStateChanged } = await import('firebase/auth');
+
+    onAuthStateChanged.mockImplementation((auth, cb) => {
+      cb({ uid: 'test-admin', email: 'stephan.asemota@gmail.com', isAnonymous: false });
+      return vi.fn();
+    });
+    onSnapshot.mockImplementation((ref, onNext) => {
+      onNext(ref.includes('entries')
+        ? { docs: [] }
+        : { exists: () => true, data: () => ({ id: '123', hostId: 'test-admin', currentPhase: 1, drillPath: [] }) }
+      );
+      return vi.fn();
+    });
+
+    getDocs.mockResolvedValueOnce({
+      docs: [
+        { id: 'S1', data: () => ({ sessionName: 'Old Sprint', isCompleted: true }) },
+        { id: 'S2', data: () => ({ sessionName: 'Another Sprint', isCompleted: true }) },
+      ],
+    });
+
+    deleteDoc.mockRejectedValueOnce(new Error('Permission denied'));
+
+    getDocs.mockResolvedValueOnce({
+      docs: [
+        { id: 'S1', data: () => ({ sessionName: 'Old Sprint', isCompleted: true }) },
+        { id: 'S2', data: () => ({ sessionName: 'Another Sprint', isCompleted: true }) },
+      ],
+    });
+
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.joinSession('123'); });
+    await act(async () => { await result.current.fetchRetroHistory(); });
+    expect(result.current.history).toHaveLength(2);
+
+    await act(async () => { await result.current.deleteSession('S1'); });
+
+    await vi.waitFor(() => expect(result.current.history).toHaveLength(2));
+    expect(result.current.history.find(s => s.id === 'S1')).toBeDefined();
+  });
+});
+
+describe('Path 3 — entries onSnapshot error callback', () => {
+  beforeEach(async () => {
+    Object.defineProperty(window, 'location', { value: { search: '' }, writable: true });
+    vi.clearAllMocks();
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementation((auth, cb) => {
+      cb({ uid: 'test-admin', email: 'stephan.asemota@gmail.com', isAnonymous: false });
+      return vi.fn();
+    });
+    // NOTE: onSnapshot will be re-mocked per-test for this suite.
+  });
+
+  it('TC-ENTRIES-ERR: fires toast.error and sets error when entries stream fails', async () => {
+    const { onSnapshot } = await import('firebase/firestore');
+    const { onAuthStateChanged } = await import('firebase/auth');
+    const { toast } = await import('react-toastify');
+
+    onAuthStateChanged.mockImplementation((auth, cb) => {
+      cb({ uid: 'test-admin', email: 'stephan.asemota@gmail.com', isAnonymous: false });
+      return vi.fn();
+    });
+
+    let callCount = 0;
+    onSnapshot.mockImplementation((ref, onNext, onError) => {
+      callCount++;
+      if (callCount === 1) {
+        onNext({ exists: () => true, data: () => ({ id: '123', hostId: 'test-admin', currentPhase: 1, drillPath: [] }) });
+      } else {
+        const err = Object.assign(new Error('quota exceeded'), { code: 'resource-exhausted' });
+        if (onError) onError(err);
+      }
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.joinSession('123'); });
+
+    expect(result.current.error).toBe('Fehler beim Laden der Einträge.');
+    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Sync-Fehler'));
+  });
+});
+
+describe('Path misc — viewSession + addEntry guard + toggleVote null-user guard', () => {
+  beforeEach(async () => {
+    Object.defineProperty(window, 'location', { value: { search: '' }, writable: true });
+    vi.clearAllMocks();
+    // Restore default mocks so joinSession works without hanging.
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementation((auth, cb) => {
+      cb({ uid: 'test-admin', email: 'stephan.asemota@gmail.com', isAnonymous: false });
+      return vi.fn();
+    });
+    const { onSnapshot } = await import('firebase/firestore');
+    onSnapshot.mockImplementation((ref, onNext) => {
+      if (ref.includes('entries')) onNext({ docs: [] });
+      else onNext({ exists: () => true, data: () => ({ id: '123', hostId: 'test-admin', currentPhase: 1, drillPath: [] }) });
+      return vi.fn();
+    });
+    const { getDoc } = await import('firebase/firestore');
+    getDoc.mockResolvedValue({ exists: () => true, data: () => ({ id: '123', hostId: 'test-admin' }) });
+    const { addDoc } = await import('firebase/firestore');
+    addDoc.mockResolvedValue();
+  });
+
+  it('TC-VIEWSESSION: sets sessionId and switches view to "summary"', async () => {
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => { result.current.viewSession('ABC123'); });
+
+    expect(result.current.sessionId).toBe('ABC123');
+    expect(result.current.view).toBe('summary');
+  });
+
+  it('TC-ADDENTRY-GUARD: does NOT call addDoc for empty or whitespace-only text', async () => {
+    const { addDoc } = await import('firebase/firestore');
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.joinSession('123'); });
+    addDoc.mockClear();
+
+    await act(async () => { await result.current.addEntry('', 'liked'); });
+    await act(async () => { await result.current.addEntry('   ', 'liked'); });
+
+    expect(addDoc).not.toHaveBeenCalled();
+    expect(result.current.error).toBeNull();
+  });
+
+  it('TC-TOGGLE-NULL-USER: toggleVote silently no-ops when user is null', async () => {
+    const { onAuthStateChanged } = await import('firebase/auth');
+    onAuthStateChanged.mockImplementationOnce((auth, cb) => { cb(null); return vi.fn(); });
+    const { updateDoc } = await import('firebase/firestore');
+    updateDoc.mockClear();
+
+    const { result } = renderHook(() => useRetroStore());
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.toggleVote('e1', []); });
+
+    expect(updateDoc).not.toHaveBeenCalled();
   });
 });

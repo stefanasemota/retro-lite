@@ -94,3 +94,24 @@ describe('deleteSession toasts', () => {
     expect(toast.success).not.toHaveBeenCalled();
   });
 });
+// ── TC-06: Standalone deleteSession export ─────────────────────────────────────
+import { deleteSession as standaloneDeleteSession } from '../../src/useRetroStore';
+
+describe('standalone deleteSession export', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'location', { value: { search: '' }, writable: true });
+    vi.clearAllMocks();
+  });
+
+  it('TC-06: calls deleteDoc with a path that contains the session ID', async () => {
+    const { deleteDoc, doc } = await import('firebase/firestore');
+    deleteDoc.mockResolvedValueOnce();
+
+    await standaloneDeleteSession('TEST01');
+
+    expect(deleteDoc).toHaveBeenCalledTimes(1);
+    // doc() is called with (db, ...pathSegments). Verify the last segment contains TEST01.
+    const docCallArgs = doc.mock.calls.at(-1).slice(1); // drop the db arg
+    expect(docCallArgs.join('/')).toContain('TEST01');
+  });
+});

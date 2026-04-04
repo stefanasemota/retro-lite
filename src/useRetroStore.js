@@ -61,14 +61,17 @@ export async function deleteSession(sid) {
  * Custom Hook for Retro-Lite Firebase Logic
  */
 export function useRetroStore() {
-  const [user, setUser]             = useState(null);
-  const [loading, setLoading]       = useState(true);
-  const [sessionId, setSessionId]   = useState('');
-  const [view, setView]             = useState('landing'); // 'landing' | 'session'
-  const [session, setSession]       = useState(null);
-  const [allEntries, setAllEntries] = useState([]);
-  const [error, setError]           = useState(null);
-  const [history, setHistory]       = useState([]);
+  const [user, setUser]                         = useState(null);
+  const [loading, setLoading]                   = useState(true);
+  const [sessionId, setSessionId]               = useState('');
+  const [view, setView]                         = useState('landing'); // 'landing' | 'session'
+  const [session, setSession]                   = useState(null);
+  const [allEntries, setAllEntries]             = useState([]);
+  const [error, setError]                       = useState(null);
+  const [history, setHistory]                   = useState([]);
+  // Path 4: tracks whether the last fetchRetroHistory call failed so the UI
+  // can surface a non-blocking "Retry" affordance instead of a blank panel.
+  const [historyFetchFailed, setHistoryFetchFailed] = useState(false);
 
   // In-flight lock: prevents double-click race on toggleVote.
   // Using a ref (not state) so the Set mutation never triggers a re-render.
@@ -151,7 +154,13 @@ export function useRetroStore() {
     const unsubEntries = onSnapshot(entriesRef(sessionId), snap => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setAllEntries(docs);
-    }, () => setError('Fehler beim Laden der Einträge.'));
+    // Path 3: dedicated error handler — log the Firestore error code for debugging
+    // and fire a non-blocking toast so the team knows the board has stale data.
+    }, (err) => {
+      console.error(`[STORE] Entries stream error [${err?.code ?? 'unknown'}]: ${err?.message}`);
+      toast.error('⚠️ Sync-Fehler: Einträge nicht aktuell. Bitte Seite neu laden.');
+      setError('Fehler beim Laden der Einträge.');
+    });
 
     return () => { 
       console.log('[STORE] Stopping listeners for:', sessionId);
@@ -428,26 +437,43 @@ export function useRetroStore() {
       );
       const snap = await getDocs(q);
       setHistory(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      // Path 4: reset the failed flag on a successful (re-)fetch.
+      setHistoryFetchFailed(false);
     } catch (err) {
+      // Path 4: surface failure non-blocking — the UI will show a Retry button.
       console.error('[retro-Lite] fetchRetroHistory failed:', err);
+      setHistoryFetchFailed(true);
       setError('Fehler beim Laden der Session-Historie.');
     }
   };
 
+  // Path 4: convenience alias so callers don't need to know about internal flag state.
+  const retryFetchHistory = () => {
+    setHistoryFetchFailed(false);
+    return fetchRetroHistory();
+  };
+
   const deleteSession = async (sid) => {
     if (!user || user.email !== ADMIN_EMAIL) return;
-    // Optimistic update: remove from UI immediately
+
+    // Path 2: optimistic update — remove from local state immediately for a
+    // snappy UX before the network round-trip completes.
     setHistory(prev => prev.filter(s => s.id !== sid));
+
     try {
       await deleteDoc(sessionRef(sid));
       toast.success('Retro-Session erfolgreich gelöscht! 🗑️');
     } catch (err) {
+      // Path 2 (catch): the server rejected the delete — roll back the optimistic UI
+      // update by re-fetching the authoritative list from Firestore.
       console.error('[retro-Lite] deleteSession failed:', err);
       toast.error(`Fehler beim Löschen: ${err.message}`);
       setError(`Sync-Fehler beim Löschen: ${err.message}`);
-      // Rollback: re-fetch the real list from Firestore
+      // Rollback: restore what the server actually has.
       fetchRetroHistory();
     }
+    // Note: no `finally` needed — the optimistic remove is the only local mutation
+    // and the catch's fetchRetroHistory() is its own self-contained rollback.
   };
 
   const viewSession = (sid) => {
@@ -463,12 +489,14 @@ export function useRetroStore() {
     sessionId, view, session, allEntries, displayEntries,
     currentPhase, focusId, drillPath, isHost,
     history,
+    // Path 4
+    historyFetchFailed,
 
     // Actions
     loginAdmin, logout, joinSession, createSession, leaveSession,
     addEntry, toggleVote, toggleBlur, setDrillPhase,
     setManualPhase, jumpToHistory, completeRetro,
     saveActionItemAndReset, updateActionItem, exportActionsToCSV,
-    fetchRetroHistory, deleteSession, viewSession,
+    fetchRetroHistory, retryFetchHistory, deleteSession, viewSession,
   };
 }

@@ -7,9 +7,28 @@ import { CATEGORIES, getWinner, getCategoryWinners, buildActionItem, formatDate 
 import { PHASES, BoardView, ContextSidebar, AdminControlTower, ContextHeader, GenesisTable } from './components';
 
 // ── Retro History List (Admin Panel) ────────────────────────────────────────
-function RetroHistoryList({ history, onView, onDelete, onFetch }) {
+function RetroHistoryList({ history, onView, onDelete, onFetch, fetchFailed, onRetry }) {
   useEffect(() => { onFetch?.(); }, []);
   const [confirmingDelete, setConfirmingDelete] = React.useState(null);
+
+  // Path 4: if the fetch failed show a non-blocking retry affordance
+  // instead of leaving the panel blank or showing a generic error banner.
+  if (fetchFailed) {
+    return (
+      <div className="mt-4 bg-red-50 border border-red-100 rounded-[2rem] p-8 flex flex-col items-center gap-4 text-center">
+        <p className="text-[13px] font-black text-red-600">
+          ⚠️ Session-Historie konnte nicht geladen werden.
+        </p>
+        <button
+          data-testid="btn-retry-history"
+          onClick={onRetry}
+          className="px-8 py-3 rounded-full bg-red-600 text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-md shadow-red-200 active:scale-95"
+        >
+          Erneut versuchen
+        </button>
+      </div>
+    );
+  }
 
   if (!history || history.length === 0) {
     return (
@@ -125,7 +144,10 @@ export default function App() {
   const handleDrillInto = (entry) => {
     if (!store.isHost || !phase.nextPhase) return;
     if (phase.nextPhase === 4) {
+      // Path 1: Phase-4 shortcut — switch to Action-Items mode directly.
+      // Must also clear the textarea so stale input doesn't persist into Phase 4.
       store.setManualPhase(4);
+      setNewEntry('');
       return;
     }
     const newPath = [...store.drillPath, { parentId: entry.id, parentText: entry.text, phase: store.currentPhase }];
@@ -337,6 +359,8 @@ export default function App() {
                     onView={store.viewSession}
                     onDelete={store.deleteSession}
                     onFetch={store.fetchRetroHistory}
+                    fetchFailed={store.historyFetchFailed}
+                    onRetry={store.retryFetchHistory}
                   />
                 </>
               ) : (
